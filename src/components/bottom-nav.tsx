@@ -5,7 +5,7 @@ const items = [
   { href: "/adicionar", label: "Adicionar", icon: "➕" },
   { href: "/trocas", label: "Trocas", icon: "🤝" },
   { href: "/perfil", label: "Perfil", icon: "👤" }
-];
+] as const;
 
 export function BottomNav() {
   return (

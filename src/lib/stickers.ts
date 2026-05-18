@@ -103,7 +103,7 @@ export async function getRecentUserStickers(supabase: Client, userId: string, li
     .limit(limit);
 
   if (error) throw error;
-  return (data ?? []) as StickerWithCode[];
+  return (data ?? []) as unknown as StickerWithCode[];
 }
 
 export async function getDashboardSummary(supabase: Client, userId: string): Promise<DashboardSummary> {
@@ -134,10 +134,10 @@ export async function getTradeMatches(supabase: Client, userId: string): Promise
   if (mineError) throw mineError;
 
   const missingCodes = new Set(
-    ((mine ?? []) as MatchInventoryRow[]).filter((item) => item.status === "missing" && item.stickers).map((item) => item.stickers!.code)
+    ((mine ?? []) as unknown as MatchInventoryRow[]).filter((item) => item.status === "missing" && item.stickers).map((item) => item.stickers!.code)
   );
   const duplicateCodes = new Set(
-    ((mine ?? []) as MatchInventoryRow[]).filter((item) => item.status === "duplicate" && item.stickers).map((item) => item.stickers!.code)
+    ((mine ?? []) as unknown as MatchInventoryRow[]).filter((item) => item.status === "duplicate" && item.stickers).map((item) => item.stickers!.code)
   );
 
   if (missingCodes.size === 0 && duplicateCodes.size === 0) return [];
