@@ -28,7 +28,7 @@ export async function signInWithEmail(_prev: ActionState, formData: FormData): P
     }
   });
 
-  if (error) return { ok: false, message: "Não foi possível enviar o link agora. Tente novamente em instantes." };
+if (error) return { ok: false, message: `Erro Supabase: ${error.message}` };
   return { ok: true, message: "Enviamos um link de acesso para seu e-mail." };
 }
 
