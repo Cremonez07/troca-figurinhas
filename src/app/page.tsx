@@ -8,7 +8,7 @@ import { StatCard } from "@/components/stat-card";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getCurrentUserId, getDashboardSummary } from "@/lib/stickers";
 import { createClient } from "@/lib/supabase/server";
-
+export const dynamic = "force-dynamic";
 export default async function HomePage() {
   if (!isSupabaseConfigured) {
     return (

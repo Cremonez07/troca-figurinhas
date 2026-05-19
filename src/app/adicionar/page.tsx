@@ -7,7 +7,7 @@ import { StickerForm } from "@/components/sticker-form";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getCurrentUserId, getRecentUserStickers } from "@/lib/stickers";
 import { createClient } from "@/lib/supabase/server";
-
+export const dynamic = "force-dynamic";
 export default async function AddPage() {
   if (!isSupabaseConfigured) {
     return <SetupNotice />;

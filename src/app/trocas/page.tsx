@@ -5,7 +5,7 @@ import { SetupNotice } from "@/components/setup-notice";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getCurrentUserId, getTradeMatches } from "@/lib/stickers";
 import { createClient } from "@/lib/supabase/server";
-
+export const dynamic = "force-dynamic";
 export default async function TradesPage() {
   if (!isSupabaseConfigured) return <SetupNotice />;
 
