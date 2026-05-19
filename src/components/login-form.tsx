@@ -31,16 +31,20 @@ export function LoginForm() {
       <form action={signInWithGoogle}>
         <button
           type="submit"
-          className="min-h-16 w-full rounded-3xl bg-white px-5 text-lg font-black text-deep shadow-soft ring-2 ring-deep/10"
+          className="min-h-16 w-full rounded-3xl bg-deep px-5 text-lg font-black text-white shadow-soft"
         >
           Entrar com Google
         </button>
       </form>
 
+      <p className="rounded-2xl bg-ice px-4 py-3 text-center text-sm font-semibold text-ink/70">
+        Recomendado para entrar rápido e manter seu álbum salvo.
+      </p>
+
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-deep/10" />
         <span className="text-xs font-black uppercase tracking-[0.18em] text-ink/50">
-          ou
+          alternativa
         </span>
         <div className="h-px flex-1 bg-deep/10" />
       </div>
@@ -48,7 +52,7 @@ export function LoginForm() {
       <form action={formAction} className="space-y-4">
         <label className="block">
           <span className="text-sm font-black uppercase tracking-[0.18em] text-deep/70">
-            E-mail
+            Receber link por e-mail
           </span>
 
           <input
@@ -64,14 +68,18 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={isDisabled}
-          className="min-h-16 w-full rounded-3xl bg-gold px-5 text-lg font-black text-deep shadow-soft disabled:opacity-60"
+          className="min-h-14 w-full rounded-3xl bg-gold/80 px-5 text-base font-black text-deep shadow-soft disabled:opacity-60"
         >
           {pending
             ? "Enviando..."
             : cooldown > 0
             ? `Reenviar em ${cooldown}s`
-            : "Receber link mágico"}
+            : "Enviar link por e-mail"}
         </button>
+
+        <p className="text-center text-xs font-semibold text-ink/50">
+          O e-mail pode demorar ou ter limite de envio. Prefira o Google.
+        </p>
 
         {state.message ? (
           <p

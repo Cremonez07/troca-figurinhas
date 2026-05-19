@@ -20,15 +20,15 @@ export default async function LoginPage() {
     <div className="space-y-5">
       <section className="rounded-[2rem] bg-deep p-5 text-white shadow-soft">
         <p className="text-sm font-black uppercase tracking-[0.2em] text-gold">
-          Login simples
+          Entrar no TrocaCopa
         </p>
 
         <h2 className="mt-2 text-3xl font-black">
-          Entre com Google.
+          Acesse seu álbum em segundos.
         </h2>
 
         <p className="mt-3 font-semibold text-white/75">
-          Use sua conta Google para guardar seu álbum e encontrar colecionadores.
+          Use sua conta Google para salvar figurinhas, completar seu perfil e encontrar trocas reais.
         </p>
       </section>
 
