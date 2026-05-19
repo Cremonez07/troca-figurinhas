@@ -1,6 +1,5 @@
 "use server";
 
-
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { addUserSticker, getCurrentUserId, normalizeStickerCode, upsertProfile } from "@/lib/stickers";
@@ -29,17 +28,35 @@ export async function signInWithEmail(_prev: ActionState, formData: FormData): P
     }
   });
 
-if (error) {
-  const isRateLimit = error.message.toLowerCase().includes("rate limit");
+  if (error) {
+    const isRateLimit = error.message.toLowerCase().includes("rate limit");
 
-  return {
-    ok: false,
-    message: isRateLimit
-      ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos e use o último link recebido."
-      : "Não foi possível enviar o link agora. Tente novamente em instantes."
-  };
-}
+    return {
+      ok: false,
+      message: isRateLimit
+        ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos e use o último link recebido."
+        : "Não foi possível enviar o link agora. Tente novamente em instantes."
+    };
+  }
+
   return { ok: true, message: "Enviamos um link de acesso para seu e-mail." };
+}
+
+export async function signInWithGoogle(): Promise<void> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`
+    }
+  });
+
+  if (error || !data.url) {
+    redirect("/login?auth=google_error");
+  }
+
+  redirect(data.url);
 }
 
 export async function saveSticker(_prev: ActionState, formData: FormData): Promise<ActionState> {
