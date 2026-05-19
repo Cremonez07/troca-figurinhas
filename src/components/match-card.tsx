@@ -1,16 +1,18 @@
+"use client";
+
+import { registerExchangeIntentAction } from "@/app/actions";
 import type { TradeMatch } from "@/lib/stickers";
 
-function whatsappUrl(phone: string, name: string | null, match: TradeMatch) {
-  const digits = phone.replace(/\D/g, "");
-
+function whatsappMessage(name: string | null, match: TradeMatch) {
   const gain = match.youGain.length ? match.youGain.join(", ") : "algumas figurinhas";
   const send = match.youSend.length ? match.youSend.join(", ") : "algumas repetidas";
 
-  const message = encodeURIComponent(
-    `Oi${name ? `, ${name}` : ""}! Vi nosso match no TrocaCopa. Eu preciso de ${gain} e posso trocar ${send}. Vamos combinar?`
-  );
+  return `Oi${name ? `, ${name}` : ""}! Vi nosso match no TrocaCopa. Eu preciso de ${gain} e posso trocar ${send}. Vamos combinar?`;
+}
 
-  return `https://wa.me/${digits}?text=${message}`;
+function whatsappUrl(phone: string, message: string) {
+  const digits = phone.replace(/\D/g, "");
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
 
 function CodeList({ codes, emptyLabel }: { codes: string[]; emptyLabel: string }) {
@@ -43,6 +45,17 @@ export function MatchCard({ match }: { match: TradeMatch }) {
   const whatsappDigits = match.collector.whatsapp?.replace(/\D/g, "") ?? "";
   const hasWhatsapp = whatsappDigits.length >= 10;
   const isPerfect = match.kind === "perfect";
+  const message = whatsappMessage(title, match);
+  const url = whatsappUrl(whatsappDigits, message);
+  const matchScore = match.youGain.length + match.youSend.length;
+
+  function handleWhatsappClick() {
+    void registerExchangeIntentAction({
+      toUserId: match.collector.id,
+      matchScore,
+      whatsappMessage: message
+    });
+  }
 
   return (
     <article className="space-y-4 rounded-[2rem] bg-white p-5 shadow-soft">
@@ -98,9 +111,10 @@ export function MatchCard({ match }: { match: TradeMatch }) {
 
       {hasWhatsapp ? (
         <a
-          href={whatsappUrl(whatsappDigits, title, match)}
+          href={url}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={handleWhatsappClick}
           className="flex min-h-14 items-center justify-center rounded-3xl bg-deep px-5 text-base font-black text-white shadow-soft"
         >
           Chamar no WhatsApp

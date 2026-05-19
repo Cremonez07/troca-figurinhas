@@ -124,3 +124,38 @@ export async function signOut(): Promise<void> {
 
   redirect("/login");
 }
+
+export type ExchangeIntentActionState = {
+  ok: boolean;
+};
+
+export async function registerExchangeIntentAction({
+  toUserId,
+  matchScore,
+  whatsappMessage
+}: {
+  toUserId: string;
+  matchScore: number;
+  whatsappMessage: string;
+}): Promise<ExchangeIntentActionState> {
+  const supabase = await createClient();
+  const userId = await getCurrentUserId(supabase);
+
+  if (!userId) {
+    return { ok: false };
+  }
+
+  const { error } = await supabase.from("exchange_intents").insert({
+    from_user_id: userId,
+    to_user_id: toUserId,
+    match_score: matchScore,
+    whatsapp_message: whatsappMessage
+  } as never);
+
+  if (error) {
+    console.error("Erro ao registrar intenção de troca", error);
+    return { ok: false };
+  }
+
+  return { ok: true };
+}
