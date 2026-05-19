@@ -22,9 +22,25 @@ export type DashboardSummary = {
 export type TradeMatch = {
   collector: Profile;
   kind: "perfect" | "simple";
+  priority: "ideal" | "good" | "partial";
+  score: number;
   youGain: string[];
   youSend: string[];
 };
+
+function calculateMatchScore(match: Pick<TradeMatch, "kind" | "youGain" | "youSend">) {
+  const kindScore = match.kind === "perfect" ? 100 : 0;
+  const gainScore = match.youGain.length * 10;
+  const sendScore = match.youSend.length * 5;
+
+  return kindScore + gainScore + sendScore;
+}
+
+function getMatchPriority(score: number): TradeMatch["priority"] {
+  if (score >= 120) return "ideal";
+  if (score >= 20) return "good";
+  return "partial";
+}
 
 export async function getCurrentUserId(supabase: Client) {
   const { data } = await supabase.auth.getUser();
@@ -134,10 +150,15 @@ export async function getTradeMatches(supabase: Client, userId: string): Promise
   if (mineError) throw mineError;
 
   const missingCodes = new Set(
-    ((mine ?? []) as unknown as MatchInventoryRow[]).filter((item) => item.status === "missing" && item.stickers).map((item) => item.stickers!.code)
+    ((mine ?? []) as unknown as MatchInventoryRow[])
+      .filter((item) => item.status === "missing" && item.stickers)
+      .map((item) => item.stickers!.code)
   );
+
   const duplicateCodes = new Set(
-    ((mine ?? []) as unknown as MatchInventoryRow[]).filter((item) => item.status === "duplicate" && item.stickers).map((item) => item.stickers!.code)
+    ((mine ?? []) as unknown as MatchInventoryRow[])
+      .filter((item) => item.status === "duplicate" && item.stickers)
+      .map((item) => item.stickers!.code)
   );
 
   if (missingCodes.size === 0 && duplicateCodes.size === 0) return [];
@@ -163,19 +184,22 @@ export async function getTradeMatches(supabase: Client, userId: string): Promise
 
     const current = byCollector.get(row.user_id) ?? {
       collector: profile,
-      kind: "simple",
+      kind: "simple" as const,
+      priority: "partial" as const,
+      score: 0,
       youGain: [],
       youSend: []
     };
 
     if (givesMe && !current.youGain.includes(code)) current.youGain.push(code);
     if (receivesFromMe && !current.youSend.includes(code)) current.youSend.push(code);
+
     current.kind = current.youGain.length > 0 && current.youSend.length > 0 ? "perfect" : "simple";
+    current.score = calculateMatchScore(current);
+    current.priority = getMatchPriority(current.score);
+
     byCollector.set(row.user_id, current);
   }
 
-  return Array.from(byCollector.values()).sort((a, b) => {
-    if (a.kind !== b.kind) return a.kind === "perfect" ? -1 : 1;
-    return b.youGain.length + b.youSend.length - (a.youGain.length + a.youSend.length);
-  });
+  return Array.from(byCollector.values()).sort((a, b) => b.score - a.score);
 }
