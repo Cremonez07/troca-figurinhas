@@ -116,3 +116,11 @@ export async function saveProfile(_prev: ActionState, formData: FormData): Promi
     return { ok: false, message: "Não foi possível atualizar o perfil agora. Revise os dados e tente novamente." };
   }
 }
+
+export async function signOut(): Promise<void> {
+  const supabase = await createClient();
+
+  await supabase.auth.signOut();
+
+  redirect("/login");
+}

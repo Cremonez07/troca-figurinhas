@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { signOut } from "@/app/actions";
 import { EmptyState } from "@/components/empty-state";
 import { ProfileForm } from "@/components/profile-form";
 import { ProgressRing } from "@/components/progress-ring";
@@ -9,7 +10,9 @@ import { StatCard } from "@/components/stat-card";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getCurrentUserId, getDashboardSummary, getProfile } from "@/lib/stickers";
 import { createClient } from "@/lib/supabase/server";
+
 export const dynamic = "force-dynamic";
+
 export default async function ProfilePage() {
   if (!isSupabaseConfigured) return <SetupNotice />;
 
@@ -58,6 +61,15 @@ export default async function ProfilePage() {
         <p className="text-2xl font-black">Seus amigos podem ter sua próxima figurinha</p>
         <p className="mt-2 font-semibold">Compartilhe seu WhatsApp e combine trocas reais, sem pontos, ranking ou recompensa artificial.</p>
       </section>
+
+      <form action={signOut} className="rounded-[2rem] bg-white p-5 shadow-soft">
+        <button
+          type="submit"
+          className="min-h-14 w-full rounded-3xl bg-ink/10 px-5 text-base font-black text-ink/70"
+        >
+          Sair da conta
+        </button>
+      </form>
     </div>
   );
 }
