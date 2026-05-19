@@ -28,7 +28,16 @@ export async function signInWithEmail(_prev: ActionState, formData: FormData): P
     }
   });
 
-if (error) return { ok: false, message: `Erro Supabase: ${error.message}` };
+if (error) {
+  const isRateLimit = error.message.toLowerCase().includes("rate limit");
+
+  return {
+    ok: false,
+    message: isRateLimit
+      ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos e use o último link recebido."
+      : "Não foi possível enviar o link agora. Tente novamente em instantes."
+  };
+}
   return { ok: true, message: "Enviamos um link de acesso para seu e-mail." };
 }
 
