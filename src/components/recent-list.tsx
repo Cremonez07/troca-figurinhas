@@ -84,6 +84,54 @@ function groupItems(items: RecentItem[]) {
   }, {});
 }
 
+function SelectionProgress({
+  total,
+  status
+}: {
+  total: number;
+  status: StickerStatus;
+}) {
+  if (status === "duplicate") {
+    return (
+      <div className="flex flex-col items-end gap-1">
+        <span className="rounded-full bg-ice px-3 py-2 text-xs font-black text-deep">
+          {total} para troca
+        </span>
+
+        <span className="text-[10px] font-black uppercase tracking-[0.14em] text-ink/50">
+          disponíveis
+        </span>
+      </div>
+    );
+  }
+
+  const missingCount = total;
+  const completed = Math.max(0, STICKERS_PER_SELECTION - missingCount);
+  const percentage = Math.min(
+    Math.round((completed / STICKERS_PER_SELECTION) * 100),
+    100
+  );
+
+  return (
+    <div className="flex flex-col items-end gap-2">
+      <span className="rounded-full bg-ice px-3 py-2 text-xs font-black text-deep">
+        {completed} de {STICKERS_PER_SELECTION}
+      </span>
+
+      <div className="h-2 w-28 overflow-hidden rounded-full bg-ice">
+        <div
+          className="h-full rounded-full bg-field transition-all"
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+
+      <span className="text-[10px] font-black text-field">
+        Faltam {missingCount} · {percentage}%
+      </span>
+    </div>
+  );
+}
+
 function Section({
   title,
   items,
@@ -111,10 +159,6 @@ function Section({
         {Object.entries(grouped).map(([prefix, selectionItems]) => {
           const selectionName = SELECTION_NAMES[prefix] ?? prefix;
           const total = selectionItems.length;
-          const percentage = Math.min(
-            Math.round((total / STICKERS_PER_SELECTION) * 100),
-            100
-          );
 
           return (
             <div key={prefix} className="rounded-[2rem] bg-white p-4 shadow-soft">
@@ -129,22 +173,7 @@ function Section({
                   </p>
                 </div>
 
-                <div className="flex flex-col items-end gap-2">
-                  <span className="rounded-full bg-ice px-3 py-2 text-xs font-black text-deep">
-                    {total} de {STICKERS_PER_SELECTION}
-                  </span>
-
-                  <div className="h-2 w-28 overflow-hidden rounded-full bg-ice">
-                    <div
-                      className="h-full rounded-full bg-field transition-all"
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-
-                  <span className="text-[10px] font-black text-field">
-                    {percentage}%
-                  </span>
-                </div>
+                <SelectionProgress total={total} status={status} />
               </div>
 
               <ul className="space-y-3">
