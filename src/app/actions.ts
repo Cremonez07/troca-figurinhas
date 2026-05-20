@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { addUserSticker, getCurrentUserId, normalizeStickerCode, upsertProfile } from "@/lib/stickers";
+import { addUserSticker, getCurrentUserId, normalizeStickerCode, removeUserSticker, upsertProfile } from "@/lib/stickers";
 import { createClient } from "@/lib/supabase/server";
 import type { StickerStatus } from "@/lib/supabase/types";
 
@@ -123,4 +123,67 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 
   redirect("/login");
+}
+
+export type ExchangeIntentActionState = {
+  ok: boolean;
+};
+
+export async function registerExchangeIntentAction({
+  toUserId,
+  matchScore,
+  whatsappMessage
+}: {
+  toUserId: string;
+  matchScore: number;
+  whatsappMessage: string;
+}): Promise<ExchangeIntentActionState> {
+  const supabase = await createClient();
+  const userId = await getCurrentUserId(supabase);
+
+  if (!userId) {
+    return { ok: false };
+  }
+
+  const { error } = await supabase.from("exchange_intents").insert({
+    from_user_id: userId,
+    to_user_id: toUserId,
+    match_score: matchScore,
+    whatsapp_message: whatsappMessage
+  } as never);
+
+  if (error) {
+    console.error("Erro ao registrar intenção de troca", error);
+    return { ok: false };
+  }
+
+  return { ok: true };
+}
+
+export type RemoveStickerActionState = {
+  ok: boolean;
+  message: string;
+};
+
+export async function removeUserStickerAction(userStickerId: string): Promise<RemoveStickerActionState> {
+  const supabase = await createClient();
+  const userId = await getCurrentUserId(supabase);
+
+  if (!userId) {
+    return { ok: false, message: "Usuário não autenticado." };
+  }
+
+  try {
+    await removeUserSticker(supabase, userStickerId);
+
+    revalidatePath("/");
+    revalidatePath("/adicionar");
+    revalidatePath("/trocas");
+    revalidatePath("/perfil");
+
+    return { ok: true, message: "Figurinha removida." };
+  } catch (error) {
+    console.error("Erro ao remover figurinha", error);
+    return { ok: false, message: "Não foi possível remover a figurinha." };
+  }
 }

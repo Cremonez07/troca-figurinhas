@@ -6,6 +6,7 @@ type MatchInventoryRow = { status: StickerStatus; stickers: { code: string } | n
 type MatchCandidateRow = { user_id: string; status: StickerStatus; stickers: { code: string } | null; profiles: Profile | null };
 
 type StickerWithCode = {
+  id: string;
   status: StickerStatus;
   created_at: string;
   stickers: { id: string; code: string; country: string | null; player_name: string | null } | null;
@@ -113,7 +114,7 @@ export async function removeUserSticker(supabase: Client, userStickerId: string)
 export async function getRecentUserStickers(supabase: Client, userId: string, limit = 8) {
   const { data, error } = await supabase
     .from("user_stickers")
-    .select("status, created_at, stickers(id, code, country, player_name)")
+    .select("id, status, created_at, stickers(id, code, country, player_name)")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
