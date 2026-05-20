@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { addUserSticker, getCurrentUserId, normalizeStickerCode, upsertProfile } from "@/lib/stickers";
+import { addUserSticker, getCurrentUserId, normalizeStickerCode, removeUserSticker, upsertProfile } from "@/lib/stickers";
 import { createClient } from "@/lib/supabase/server";
 import type { StickerStatus } from "@/lib/supabase/types";
 
@@ -158,4 +158,32 @@ export async function registerExchangeIntentAction({
   }
 
   return { ok: true };
+}
+
+export type RemoveStickerActionState = {
+  ok: boolean;
+  message: string;
+};
+
+export async function removeUserStickerAction(userStickerId: string): Promise<RemoveStickerActionState> {
+  const supabase = await createClient();
+  const userId = await getCurrentUserId(supabase);
+
+  if (!userId) {
+    return { ok: false, message: "Usuário não autenticado." };
+  }
+
+  try {
+    await removeUserSticker(supabase, userStickerId);
+
+    revalidatePath("/");
+    revalidatePath("/adicionar");
+    revalidatePath("/trocas");
+    revalidatePath("/perfil");
+
+    return { ok: true, message: "Figurinha removida." };
+  } catch (error) {
+    console.error("Erro ao remover figurinha", error);
+    return { ok: false, message: "Não foi possível remover a figurinha." };
+  }
 }
