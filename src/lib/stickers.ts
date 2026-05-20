@@ -122,7 +122,16 @@ export async function getRecentUserStickers(supabase: Client, userId: string, li
   if (error) throw error;
   return (data ?? []) as unknown as StickerWithCode[];
 }
+export async function getAllUserStickers(supabase: Client, userId: string) {
+  const { data, error } = await supabase
+    .from("user_stickers")
+    .select("id, status, created_at, stickers(id, code, country, player_name)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
+  if (error) throw error;
+  return (data ?? []) as unknown as StickerWithCode[];
+}
 export async function getDashboardSummary(supabase: Client, userId: string): Promise<DashboardSummary> {
   const [{ count: missingTotal }, { count: duplicateTotal }, recent, matches] = await Promise.all([
     supabase.from("user_stickers").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "missing"),
