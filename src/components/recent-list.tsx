@@ -12,6 +12,8 @@ type RecentItem = {
   } | null;
 };
 
+const STICKERS_PER_SELECTION = 20;
+
 const SELECTION_NAMES: Record<string, string> = {
   MEX: "🇲🇽 México",
   RSA: "🇿🇦 África do Sul",
@@ -98,9 +100,7 @@ function Section({
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-black text-deep">
-          {title}
-        </h3>
+        <h3 className="text-lg font-black text-deep">{title}</h3>
 
         <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-deep shadow-sm">
           {items.length}
@@ -110,13 +110,15 @@ function Section({
       <div className="space-y-4">
         {Object.entries(grouped).map(([prefix, selectionItems]) => {
           const selectionName = SELECTION_NAMES[prefix] ?? prefix;
+          const total = selectionItems.length;
+          const percentage = Math.min(
+            Math.round((total / STICKERS_PER_SELECTION) * 100),
+            100
+          );
 
           return (
-            <div
-              key={prefix}
-              className="rounded-[2rem] bg-white p-4 shadow-soft"
-            >
-              <div className="mb-3 flex items-center justify-between">
+            <div key={prefix} className="rounded-[2rem] bg-white p-4 shadow-soft">
+              <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
                   <p className="text-lg font-black text-deep">
                     {selectionName}
@@ -127,17 +129,28 @@ function Section({
                   </p>
                 </div>
 
-                <span className="rounded-full bg-ice px-3 py-2 text-xs font-black text-deep">
-                  {selectionItems.length} figurinhas
-                </span>
+                <div className="flex flex-col items-end gap-2">
+                  <span className="rounded-full bg-ice px-3 py-2 text-xs font-black text-deep">
+                    {total} de {STICKERS_PER_SELECTION}
+                  </span>
+
+                  <div className="h-2 w-28 overflow-hidden rounded-full bg-ice">
+                    <div
+                      className="h-full rounded-full bg-field transition-all"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+
+                  <span className="text-[10px] font-black text-field">
+                    {percentage}%
+                  </span>
+                </div>
               </div>
 
               <ul className="space-y-3">
                 {selectionItems.map((item, index) => {
                   const actionLabel =
-                    item.status === "missing"
-                      ? "Consegui"
-                      : "Troquei";
+                    item.status === "missing" ? "Consegui" : "Troquei";
 
                   return (
                     <li
@@ -150,9 +163,7 @@ function Section({
                         </p>
 
                         <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink/50">
-                          {status === "missing"
-                            ? "faltando"
-                            : "repetida"}
+                          {status === "missing" ? "faltando" : "repetida"}
                         </p>
                       </div>
 
@@ -164,9 +175,7 @@ function Section({
                               : "bg-field text-white"
                           }`}
                         >
-                          {status === "missing"
-                            ? "Quero"
-                            : "Tenho"}
+                          {status === "missing" ? "Quero" : "Tenho"}
                         </span>
 
                         <form
@@ -204,21 +213,12 @@ export function RecentList({ items }: { items: RecentItem[] }) {
     );
   }
 
-  const missingItems = items.filter(
-    (item) => item.status === "missing"
-  );
-
-  const duplicateItems = items.filter(
-    (item) => item.status === "duplicate"
-  );
+  const missingItems = items.filter((item) => item.status === "missing");
+  const duplicateItems = items.filter((item) => item.status === "duplicate");
 
   return (
     <div className="space-y-6">
-      <Section
-        title="🎯 Procurando"
-        items={missingItems}
-        status="missing"
-      />
+      <Section title="🎯 Procurando" items={missingItems} status="missing" />
 
       <Section
         title="🤝 Disponíveis para troca"
