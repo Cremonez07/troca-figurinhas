@@ -5,8 +5,157 @@ type RecentItem = {
   id: string;
   status: StickerStatus;
   created_at: string;
-  stickers: { code: string; country: string | null; player_name: string | null } | null;
+  stickers: {
+    code: string;
+    country: string | null;
+    player_name: string | null;
+  } | null;
 };
+
+const SELECTION_NAMES: Record<string, string> = {
+  BRA: "Brasil",
+  ARG: "Argentina",
+  GER: "Alemanha",
+  FRA: "França",
+  ESP: "Espanha",
+  POR: "Portugal",
+  ENG: "Inglaterra",
+  ITA: "Itália",
+  NED: "Holanda",
+  BEL: "Bélgica"
+};
+
+function getSelectionPrefix(code: string) {
+  return code.replace(/[0-9]/g, "").toUpperCase();
+}
+
+function groupItems(items: RecentItem[]) {
+  return items.reduce<Record<string, RecentItem[]>>((acc, item) => {
+    const code = item.stickers?.code ?? "OUTRAS";
+    const prefix = getSelectionPrefix(code);
+
+    if (!acc[prefix]) {
+      acc[prefix] = [];
+    }
+
+    acc[prefix].push(item);
+
+    return acc;
+  }, {});
+}
+
+function Section({
+  title,
+  items,
+  status
+}: {
+  title: string;
+  items: RecentItem[];
+  status: StickerStatus;
+}) {
+  if (!items.length) return null;
+
+  const grouped = groupItems(items);
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-black text-deep">
+          {title}
+        </h3>
+
+        <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-deep shadow-sm">
+          {items.length}
+        </span>
+      </div>
+
+      <div className="space-y-4">
+        {Object.entries(grouped).map(([prefix, selectionItems]) => {
+          const selectionName = SELECTION_NAMES[prefix] ?? prefix;
+
+          return (
+            <div
+              key={prefix}
+              className="rounded-[2rem] bg-white p-4 shadow-soft"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-black text-deep">
+                    {selectionName}
+                  </p>
+
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink/50">
+                    {prefix}
+                  </p>
+                </div>
+
+                <span className="rounded-full bg-ice px-3 py-2 text-xs font-black text-deep">
+                  {selectionItems.length} figurinhas
+                </span>
+              </div>
+
+              <ul className="space-y-3">
+                {selectionItems.map((item, index) => {
+                  const actionLabel =
+                    item.status === "missing"
+                      ? "Consegui"
+                      : "Troquei";
+
+                  return (
+                    <li
+                      key={`${item.id}-${index}`}
+                      className="flex items-center justify-between gap-3 rounded-3xl bg-ice px-4 py-3"
+                    >
+                      <div>
+                        <p className="text-lg font-black text-deep">
+                          {item.stickers?.code ?? "Sem código"}
+                        </p>
+
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink/50">
+                          {status === "missing"
+                            ? "faltando"
+                            : "repetida"}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span
+                          className={`rounded-full px-3 py-2 text-xs font-black ${
+                            status === "missing"
+                              ? "bg-gold text-deep"
+                              : "bg-field text-white"
+                          }`}
+                        >
+                          {status === "missing"
+                            ? "Quero"
+                            : "Tenho"}
+                        </span>
+
+                        <form
+                          action={async () => {
+                            "use server";
+                            await removeUserStickerAction(item.id);
+                          }}
+                        >
+                          <button
+                            type="submit"
+                            className="min-h-10 rounded-2xl bg-white px-3 text-xs font-black text-deep/70 shadow-sm"
+                          >
+                            {actionLabel}
+                          </button>
+                        </form>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 export function RecentList({ items }: { items: RecentItem[] }) {
   if (items.length === 0) {
@@ -17,54 +166,27 @@ export function RecentList({ items }: { items: RecentItem[] }) {
     );
   }
 
+  const missingItems = items.filter(
+    (item) => item.status === "missing"
+  );
+
+  const duplicateItems = items.filter(
+    (item) => item.status === "duplicate"
+  );
+
   return (
-    <ul className="space-y-3">
-      {items.map((item, index) => {
-        const actionLabel = item.status === "missing" ? "Consegui" : "Troquei";
+    <div className="space-y-6">
+      <Section
+        title="🎯 Procurando"
+        items={missingItems}
+        status="missing"
+      />
 
-        return (
-          <li
-            key={`${item.id}-${item.stickers?.code ?? "sticker"}-${item.created_at}-${index}`}
-            className="flex min-h-16 items-center justify-between gap-3 rounded-3xl bg-ice px-4 py-3"
-          >
-            <div>
-              <p className="text-xl font-black text-deep">
-                {item.stickers?.code ?? "Sem código"}
-              </p>
-
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink/50">
-                {item.status === "missing" ? "faltando" : "repetida"}
-              </p>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              <span
-                className={`rounded-full px-3 py-2 text-xs font-black ${
-                  item.status === "missing"
-                    ? "bg-gold text-deep"
-                    : "bg-field text-white"
-                }`}
-              >
-                {item.status === "missing" ? "Quero" : "Tenho"}
-              </span>
-
-              <form
-                action={async () => {
-                  "use server";
-                  await removeUserStickerAction(item.id);
-                }}
-              >
-                <button
-                  type="submit"
-                  className="min-h-10 rounded-2xl bg-white px-3 text-xs font-black text-deep/70 shadow-sm"
-                >
-                  {actionLabel}
-                </button>
-              </form>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+      <Section
+        title="🤝 Disponíveis para troca"
+        items={duplicateItems}
+        status="duplicate"
+      />
+    </div>
   );
 }
