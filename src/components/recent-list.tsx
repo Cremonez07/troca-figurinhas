@@ -19,48 +19,52 @@ export function RecentList({ items }: { items: RecentItem[] }) {
 
   return (
     <ul className="space-y-3">
-      {items.map((item, index) => (
-        <li
-          key={`${item.id}-${item.stickers?.code ?? "sticker"}-${item.created_at}-${index}`}
-          className="flex min-h-16 items-center justify-between gap-3 rounded-3xl bg-ice px-4 py-3"
-        >
-          <div>
-            <p className="text-xl font-black text-deep">
-              {item.stickers?.code ?? "Sem código"}
-            </p>
+      {items.map((item, index) => {
+        const actionLabel = item.status === "missing" ? "Consegui" : "Troquei";
 
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink/50">
-              {item.status === "missing" ? "faltando" : "repetida"}
-            </p>
-          </div>
+        return (
+          <li
+            key={`${item.id}-${item.stickers?.code ?? "sticker"}-${item.created_at}-${index}`}
+            className="flex min-h-16 items-center justify-between gap-3 rounded-3xl bg-ice px-4 py-3"
+          >
+            <div>
+              <p className="text-xl font-black text-deep">
+                {item.stickers?.code ?? "Sem código"}
+              </p>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <span
-              className={`rounded-full px-3 py-2 text-xs font-black ${
-                item.status === "missing"
-                  ? "bg-gold text-deep"
-                  : "bg-field text-white"
-              }`}
-            >
-              {item.status === "missing" ? "Quero" : "Tenho"}
-            </span>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink/50">
+                {item.status === "missing" ? "faltando" : "repetida"}
+              </p>
+            </div>
 
-            <form
-  action={async () => {
-    "use server";
-    await removeUserStickerAction(item.id);
-  }}
->
-              <button
-                type="submit"
-                className="min-h-10 rounded-2xl bg-white px-3 text-xs font-black text-deep/70 shadow-sm"
+            <div className="flex shrink-0 items-center gap-2">
+              <span
+                className={`rounded-full px-3 py-2 text-xs font-black ${
+                  item.status === "missing"
+                    ? "bg-gold text-deep"
+                    : "bg-field text-white"
+                }`}
               >
-                Remover
-              </button>
-            </form>
-          </div>
-        </li>
-      ))}
+                {item.status === "missing" ? "Quero" : "Tenho"}
+              </span>
+
+              <form
+                action={async () => {
+                  "use server";
+                  await removeUserStickerAction(item.id);
+                }}
+              >
+                <button
+                  type="submit"
+                  className="min-h-10 rounded-2xl bg-white px-3 text-xs font-black text-deep/70 shadow-sm"
+                >
+                  {actionLabel}
+                </button>
+              </form>
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 }
