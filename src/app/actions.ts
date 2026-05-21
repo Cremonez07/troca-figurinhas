@@ -1,5 +1,5 @@
 "use server";
-QUEBRA_O_APP_AGORA_POR_FAVOR
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { addUserSticker, getCurrentUserId, removeUserSticker, upsertProfile } from "@/lib/stickers";
@@ -30,11 +30,10 @@ export async function signInWithEmail(_prev: ActionState, formData: FormData): P
 
   if (error) {
     const isRateLimit = error.message.toLowerCase().includes("rate limit");
-
     return {
       ok: false,
       message: isRateLimit
-        ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos e use o link recebido."
+        ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos e use o último link recebido."
         : "Não foi possível enviar o link agora. Tente novamente em instantes."
     };
   }
@@ -44,7 +43,6 @@ export async function signInWithEmail(_prev: ActionState, formData: FormData): P
 
 export async function signInWithGoogle(): Promise<void> {
   const supabase = await createClient();
-
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
@@ -55,15 +53,10 @@ export async function signInWithGoogle(): Promise<void> {
   if (error || !data.url) {
     redirect("/login?auth=google_error");
   }
-
   redirect(data.url);
 }
 
-// 🔥 SAVE STICKER COM TESTE DE SANIDADE DA GEM ARCHITECT
 export async function saveSticker(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  // LOG DE SINALIZAÇÃO PARA REVISÃO NO TERMINAL DO CODESPACES:
-  console.log("🚨 ALERTA GERAL: CONSEGUI ACESSAR A ACTION NOVA COM REGEX!");
-
   const rawCodeInput = requireString(formData, "code");
   const status = requireString(formData, "status") as StickerStatus;
 
@@ -76,6 +69,7 @@ export async function saveSticker(_prev: ActionState, formData: FormData): Promi
   const userId = await getCurrentUserId(supabase);
   if (!userId) redirect("/login");
 
+  // Regex: Filtra padrões como BRA10, ARG02, de forma grudada ou separada
   const stickerRegex = /[A-Z]{3}\d+/g;
   const cleanInput = rawCodeInput.toUpperCase();
   const matchedCodes = cleanInput.match(stickerRegex);
@@ -85,6 +79,7 @@ export async function saveSticker(_prev: ActionState, formData: FormData): Promi
   }
 
   try {
+    // Laço sequencial seguro para salvar cada código identificado no lote
     for (const individualCode of matchedCodes) {
       await addUserSticker(supabase, userId, individualCode, status);
     }
@@ -133,10 +128,10 @@ export async function saveProfile(_prev: ActionState, formData: FormData): Promi
 
     revalidatePath("/perfil");
     revalidatePath("/trocas");
-    return { ok: true, message: "Perfil atualizado com sucesso." };
+    return { ok: true, message: "Perfil updated. Agora os colecionadores sabem como combinar a troca." };
   } catch (error) {
     console.error("Erro ao salvar perfil", error);
-    return { ok: false, message: "Não foi possível atualizar o perfil agora. Revise os dados e tente novamente." };
+    return { ok: false, message: "Não foi possível atualizar o perfil agora." };
   }
 }
 
@@ -162,9 +157,7 @@ export async function registerExchangeIntentAction({
   const supabase = await createClient();
   const userId = await getCurrentUserId(supabase);
 
-  if (!userId) {
-    return { ok: false };
-  }
+  if (!userId) return { ok: false };
 
   const { error } = await supabase.from("exchange_intents").insert({
     from_user_id: userId,
@@ -177,7 +170,6 @@ export async function registerExchangeIntentAction({
     console.error("Erro ao registrar intenção de troca", error);
     return { ok: false };
   }
-
   return { ok: true };
 }
 
@@ -190,18 +182,14 @@ export async function removeUserStickerAction(userStickerId: string): Promise<Re
   const supabase = await createClient();
   const userId = await getCurrentUserId(supabase);
 
-  if (!userId) {
-    return { ok: false, message: "Usuário não autenticado." };
-  }
+  if (!userId) return { ok: false, message: "Usuário não autenticado." };
 
   try {
     await removeUserSticker(supabase, userStickerId);
-
     revalidatePath("/");
     revalidatePath("/adicionar");
     revalidatePath("/trocas");
     revalidatePath("/perfil");
-
     return { ok: true, message: "Figurinha removida." };
   } catch (error) {
     console.error("Erro ao remover figurinha", error);
