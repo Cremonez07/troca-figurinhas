@@ -34,7 +34,7 @@ export async function signInWithEmail(_prev: ActionState, formData: FormData): P
     return {
       ok: false,
       message: isRateLimit
-        ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos e use o último link recebido."
+        ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos e use o Executar link recebido."
         : "Não foi possível enviar o link agora. Tente novamente em instantes."
     };
   }
@@ -59,7 +59,7 @@ export async function signInWithGoogle(): Promise<void> {
   redirect(data.url);
 }
 
-// 🔥 FUNÇÃO ATUALIZADA: Agora aceita múltiplos códigos separados por espaço, vírgula ou quebra de linha
+// 🔥 FUNÇÃO CORRIGIDA: Agora separa de forma agressiva por qualquer símbolo comum antes de limpar o código
 export async function saveSticker(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const rawCodes = requireString(formData, "code");
   const status = requireString(formData, "status") as StickerStatus;
@@ -67,9 +67,12 @@ export async function saveSticker(_prev: ActionState, formData: FormData): Promi
   if (!rawCodes) return { ok: false, message: "Digite ao menos um código de figurinha." };
   if (status !== "missing" && status !== "duplicate") return { ok: false, message: "Escolha se ela está faltando ou repetida." };
 
-  // Separa o texto por espaços, vírgulas, ponto e vírgulas ou quebras de linha
-  const codes = rawCodes
-    .split(/[\s,;\n]+/)
+  // Substitui pontos e vírgulas, barras ou traços por espaços para garantir isolamento completo
+  const cleanInput = rawCodes.replace(/[;,/\-_]/g, " ");
+
+  // Agora quebra o texto por qualquer sequência de espaços ou quebras de linha
+  const codes = cleanInput
+    .split(/[\s\n\r]+/)
     .map((c) => normalizeStickerCode(c))
     .filter((c) => c.length > 0);
 
@@ -80,7 +83,6 @@ export async function saveSticker(_prev: ActionState, formData: FormData): Promi
   if (!userId) redirect("/login");
 
   try {
-    // Chama a nossa nova função em lote do arquivo stickers.ts
     await addUserStickersBatch(supabase, userId, codes, status);
     
     revalidatePath("/");
@@ -125,7 +127,7 @@ export async function saveProfile(_prev: ActionState, formData: FormData): Promi
 
     revalidatePath("/perfil");
     revalidatePath("/trocas");
-    return { ok: true, message: "Perfil updated. Agora os colecionadores sabem como combinar a troca." };
+    return { ok: true, message: "Perfil atualizado. Agora os colecionadores sabem como combinar a troca." };
   } catch (error) {
     console.error("Erro ao salvar perfil", error);
     return { ok: false, message: "Não foi possível atualizar o perfil agora. Revise os dados e tente novamente." };
