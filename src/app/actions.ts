@@ -59,12 +59,12 @@ export async function signInWithGoogle(): Promise<void> {
   redirect(data.url);
 }
 
-// 🔥 IMPLEMENTAÇÃO DA GEM ARCHITECT: Captura os códigos por padrão de letras e números
+// 🔥 CÓDIGO DA GEM ARCHITECT: Separação via Regex atômica
 export async function saveSticker(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const rawCodeInput = requireString(formData, "code");
+  const rawCode = requireString(formData, "code");
   const status = requireString(formData, "status") as StickerStatus;
 
-  if (!rawCodeInput) return { ok: false, message: "Digite o código da(s) figurinha(s)." };
+  if (!rawCode) return { ok: false, message: "Digite o código da figurinha." };
   if (status !== "missing" && status !== "duplicate") {
     return { ok: false, message: "Escolha se ela está faltando ou repetida." };
   }
@@ -73,36 +73,41 @@ export async function saveSticker(_prev: ActionState, formData: FormData): Promi
   const userId = await getCurrentUserId(supabase);
   if (!userId) redirect("/login");
 
-  // Regex genial que separa os padrões (Ex: BRA10, ARG07) mesmo colados ou com símbolos
+  // Expressão regular: Captura 3 letras seguidas de 2 ou 3 números (ex: BRA10, ARG102)
   const stickerRegex = /[A-Z]{3}\d{2,3}/g;
-  const sanitizedInput = rawCodeInput.toUpperCase().replace(/[\s-]+/g, "");
-  const matchedCodes = sanitizedInput.match(stickerRegex);
+  
+  // Normaliza limpando hifens/espaços e colocando em caixa alta
+  const sanitizedInput = rawCode.toUpperCase().replace(/[\s-]+/g, "");
+  
+  // Encontra todas as ocorrências isoladas dentro da string literal
+  const parsedCodes = sanitizedInput.match(stickerRegex);
 
-  if (!matchedCodes || matchedCodes.length === 0) {
-    return { ok: false, message: "Nenhum código de figurinha válido encontrado (Ex: BRA10, ARG07)." };
+  // Se o usuário digitou lixo ou nada legível pelo padrão da copa
+  if (!parsedCodes || parsedCodes.length === 0) {
+    return { ok: false, message: "Nenhum código válido encontrado. Use o formato: BRA10, ESP08." };
   }
 
   try {
-    // Executa em lote aproveitando as travas de segurança originais do core
-    await Promise.all(
-      matchedCodes.map((code) => addUserSticker(supabase, userId, code, status))
-    );
+    // Processa cada código encontrado de forma individual e sequencial
+    for (const individualCode of parsedCodes) {
+      await addUserSticker(supabase, userId, individualCode, status);
+    }
 
-    // Revalidação do Next.js 15
+    // Força a atualização do cache do Next.js nas páginas afetadas
     revalidatePath("/");
     revalidatePath("/adicionar");
     revalidatePath("/trocas");
     revalidatePath("/perfil");
 
-    const totalSaved = matchedCodes.length;
-    const messageFeedback = totalSaved > 1 
-      ? `${totalSaved} figurinhas salvas como ${status === "missing" ? "faltando" : "repetidas"} (${matchedCodes.join(", ")}).`
-      : `${matchedCodes[0]} salva como ${status === "missing" ? "faltando" : "repetida"}.`;
+    const badgeCount = parsedCodes.length;
+    const feedbackMessage = badgeCount > 1 
+      ? `${badgeCount} figurinhas adicionadas (${parsedCodes.join(", ")}).`
+      : `${parsedCodes[0]} salva com sucesso.`;
 
-    return { ok: true, message: messageFeedback };
+    return { ok: true, message: feedbackMessage };
   } catch (error) {
-    console.error("Erro ao salvar lote de figurinhas:", error);
-    return { ok: false, message: "Não foi possível salvar as figurinhas. Revise os códigos inseridos." };
+    console.error("Erro ao salvar lote de figurinhas", error);
+    return { ok: false, message: "Erro ao processar o lote de figurinhas." };
   }
 }
 
