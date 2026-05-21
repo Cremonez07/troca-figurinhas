@@ -1,0 +1,2570 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: .next/**, node_modules/**
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+src/
+  app/
+    adicionar/
+      page.tsx
+    album/
+      page.tsx
+    auth/
+      callback/
+        route.ts
+    login/
+      page.tsx
+    perfil/
+      page.tsx
+    trocas/
+      page.tsx
+    actions.ts
+    globals.css
+    layout.tsx
+    page.tsx
+  components/
+    bottom-nav.tsx
+    empty-state.tsx
+    login-form.tsx
+    match-card.tsx
+    profile-form.tsx
+    progress-ring.tsx
+    recent-list.tsx
+    section-card.tsx
+    setup-notice.tsx
+    stat-card.tsx
+    sticker-form.tsx
+  lib/
+    supabase/
+      client.ts
+      server.ts
+      types.ts
+    env.ts
+    stickers.ts
+  middleware.ts
+supabase/
+  schema.sql
+.gitignore
+eslint.config.mjs
+next-env.d.ts
+next.config.ts
+package.json
+postcss.config.js
+README.md
+tailwind.config.ts
+tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="src/app/album/page.tsx">
+import Link from "next/link";
+import { EmptyState } from "@/components/empty-state";
+import { RecentList } from "@/components/recent-list";
+import { SetupNotice } from "@/components/setup-notice";
+import { isSupabaseConfigured } from "@/lib/env";
+import { getAllUserStickers, getCurrentUserId } from "@/lib/stickers";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+export default async function AlbumPage() {
+  if (!isSupabaseConfigured) return <SetupNotice />;
+
+  const supabase = await createClient();
+  const userId = await getCurrentUserId(supabase);
+
+  if (!userId) {
+    return (
+      <section className="space-y-4 rounded-[2rem] bg-white p-5 shadow-soft">
+        <h2 className="text-2xl font-black text-deep">
+          Entre para ver seu álbum
+        </h2>
+
+        <p className="font-semibold text-ink/70">
+          Faça login para acessar todas as suas figurinhas cadastradas.
+        </p>
+
+        <Link
+          href="/login"
+          className="flex min-h-14 items-center justify-center rounded-3xl bg-gold px-5 font-black text-deep"
+        >
+          Entrar
+        </Link>
+      </section>
+    );
+  }
+
+  const all = await getAllUserStickers(supabase, userId);
+
+  const missingTotal = all.filter((item) => item.status === "missing").length;
+  const duplicateTotal = all.filter((item) => item.status === "duplicate").length;
+  const total = all.length;
+
+  return (
+    <div className="space-y-5">
+      <section className="rounded-[2rem] bg-deep p-5 text-white shadow-soft">
+        <p className="text-sm font-black uppercase tracking-[0.2em] text-gold">
+          Meu Álbum
+        </p>
+
+        <h2 className="mt-2 text-3xl font-black">
+          Todas as suas figurinhas.
+        </h2>
+
+        <p className="mt-2 text-sm font-semibold text-white/80">
+          Veja faltantes, repetidas e acompanhe sua coleção completa.
+        </p>
+      </section>
+
+      <section className="grid grid-cols-3 gap-3">
+        <article className="rounded-3xl bg-white p-4 text-center shadow-soft">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-ink/60">
+            Faltando
+          </p>
+          <p className="mt-1 text-2xl font-black text-deep">{missingTotal}</p>
+        </article>
+
+        <article className="rounded-3xl bg-white p-4 text-center shadow-soft">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-ink/60">
+            Repetidas
+          </p>
+          <p className="mt-1 text-2xl font-black text-deep">{duplicateTotal}</p>
+        </article>
+
+        <article className="rounded-3xl bg-white p-4 text-center shadow-soft">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-ink/60">
+            Total
+          </p>
+          <p className="mt-1 text-2xl font-black text-deep">{total}</p>
+        </article>
+      </section>
+
+      <section className="space-y-3">
+        {all.length ? (
+          <RecentList items={all} />
+        ) : (
+          <EmptyState
+            title="Seu álbum ainda está vazio"
+            description="Adicione faltantes e repetidas para começar sua coleção."
+          />
+        )}
+      </section>
+
+      <Link
+        href="/adicionar"
+        className="flex min-h-14 items-center justify-center rounded-3xl bg-gold px-5 text-base font-black text-deep shadow-soft"
+      >
+        Adicionar mais figurinhas
+      </Link>
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/auth/callback/route.ts">
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+
+export async function GET(request: Request) {
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get("code");
+
+  if (!code) {
+    return NextResponse.redirect(new URL("/login?auth=missing_code", requestUrl.origin));
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (error) {
+    console.error("Erro no callback de autenticação", error);
+    return NextResponse.redirect(new URL("/login?auth=callback_error", requestUrl.origin));
+  }
+
+  return NextResponse.redirect(new URL("/", requestUrl.origin));
+}
+</file>
+
+<file path="src/app/globals.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  background: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: #f8fafc;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(247, 201, 72, 0.35), transparent 32rem),
+    linear-gradient(180deg, #f8fafc 0%, #eef6ff 100%);
+  color: #102033;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+</file>
+
+<file path="src/app/layout.tsx">
+import type { Metadata, Viewport } from "next";
+import Link from "next/link";
+import { ReactNode } from "react";
+import { BottomNav } from "@/components/bottom-nav";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "TrocaCopa",
+  description: "Trocas reais de figurinhas da Copa entre colecionadores."
+};
+
+export const viewport: Viewport = {
+  themeColor: "#12355B",
+  width: "device-width",
+  initialScale: 1
+};
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="pt-BR">
+      <body className="font-sans antialiased">
+        <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-ice/80 shadow-soft">
+          <header className="sticky top-0 z-20 border-b border-white/70 bg-ice/90 px-5 py-4 backdrop-blur">
+            <Link href="/" className="flex items-center justify-between rounded-3xl">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.28em] text-field">TrocaCopa</p>
+                <h1 className="text-2xl font-black tracking-tight text-deep">Troque figurinhas</h1>
+              </div>
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gold text-2xl shadow-soft" aria-hidden>
+                ⚽
+              </div>
+            </Link>
+          </header>
+          <main className="flex-1 px-5 pb-28 pt-5">{children}</main>
+          <BottomNav />
+        </div>
+      </body>
+    </html>
+  );
+}
+</file>
+
+<file path="src/components/empty-state.tsx">
+export function EmptyState({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="rounded-3xl border-2 border-dashed border-deep/15 bg-ice p-6 text-center">
+      <p className="text-lg font-black text-deep">{title}</p>
+      <p className="mt-2 text-sm font-semibold text-ink/70">{description}</p>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/profile-form.tsx">
+"use client";
+
+import { useActionState } from "react";
+import { saveProfile, type ActionState } from "@/app/actions";
+import type { Profile } from "@/lib/supabase/types";
+
+const initialState: ActionState = { ok: false, message: "" };
+
+const fields = [
+  { name: "full_name", label: "Nome", placeholder: "Seu nome", autoComplete: "name", inputMode: "text", required: true },
+  { name: "whatsapp", label: "WhatsApp", placeholder: "55 11 99999-9999", autoComplete: "tel", inputMode: "tel", required: true },
+  { name: "city", label: "Cidade", placeholder: "São Paulo", autoComplete: "address-level2", inputMode: "text", required: true },
+  { name: "neighborhood", label: "Bairro", placeholder: "Vila Mariana", autoComplete: "address-line2", inputMode: "text", required: true },
+  { name: "exchange_point", label: "Ponto de troca opcional", placeholder: "Shopping, metrô, praça...", autoComplete: "off", inputMode: "text", required: false }
+] as const;
+
+export function ProfileForm({ profile }: { profile: Profile | null }) {
+  const [state, formAction, pending] = useActionState(saveProfile, initialState);
+
+  return (
+    <form action={formAction} className="space-y-4 rounded-[2rem] bg-white p-5 shadow-soft">
+      {fields.map((field) => (
+        <label key={field.name} className="block">
+          <span className="text-sm font-black uppercase tracking-[0.16em] text-deep/70">{field.label}</span>
+          <input
+            name={field.name}
+            defaultValue={(profile?.[field.name] as string | null) ?? ""}
+            placeholder={field.placeholder}
+            autoComplete={field.autoComplete}
+            inputMode={field.inputMode}
+            required={field.required}
+            className="mt-2 min-h-14 w-full rounded-2xl border-2 border-deep/10 bg-ice px-4 text-base font-bold text-deep outline-none focus:border-field"
+          />
+        </label>
+      ))}
+      <button type="submit" disabled={pending} className="min-h-16 w-full rounded-3xl bg-deep px-5 text-lg font-black text-white shadow-soft disabled:opacity-60">
+        {pending ? "Salvando..." : "Salvar perfil"}
+      </button>
+      {state.message ? <p aria-live="polite" className={`rounded-2xl px-4 py-3 text-sm font-bold ${state.ok ? "bg-field/10 text-field" : "bg-red-50 text-red-700"}`}>{state.message}</p> : null}
+    </form>
+  );
+}
+</file>
+
+<file path="src/components/progress-ring.tsx">
+export function ProgressRing({ value }: { value: number }) {
+  const clamped = Math.max(0, Math.min(100, value));
+  return (
+    <div className="relative grid h-32 w-32 place-items-center rounded-full bg-white shadow-soft">
+      <div
+        className="absolute inset-2 rounded-full"
+        style={{ background: `conic-gradient(#19A974 ${clamped * 3.6}deg, #E2E8F0 0deg)` }}
+      />
+      <div className="relative grid h-24 w-24 place-items-center rounded-full bg-ice text-center">
+        <span className="text-3xl font-black text-deep">{clamped}%</span>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/section-card.tsx">
+import { ReactNode } from "react";
+
+export function SectionCard({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
+  return (
+    <section className="rounded-[2rem] bg-white p-5 shadow-soft">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-xl font-black text-deep">{title}</h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+</file>
+
+<file path="src/components/setup-notice.tsx">
+import Link from "next/link";
+
+export function SetupNotice() {
+  const canShowTechnicalSetup = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_SHOW_SETUP_NOTICE === "true";
+
+  if (!canShowTechnicalSetup) return null;
+
+  return (
+    <div className="space-y-4 rounded-[2rem] bg-deep p-5 text-white shadow-soft">
+      <p className="text-xl font-black">Conecte o Supabase</p>
+      <p className="text-sm font-semibold text-white/75">
+        Configure as variáveis públicas do Supabase no ambiente local para ativar login, CRUD e matches reais.
+      </p>
+      <Link href="/login" className="flex min-h-14 items-center justify-center rounded-3xl bg-gold px-5 font-black text-deep">
+        Ver login
+      </Link>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/stat-card.tsx">
+import { ReactNode } from "react";
+
+export function StatCard({ label, value, hint, tone = "light" }: { label: string; value: ReactNode; hint?: string; tone?: "light" | "gold" | "green" }) {
+  const tones = {
+    light: "bg-white text-deep",
+    gold: "bg-gold text-deep",
+    green: "bg-field text-white"
+  };
+
+  return (
+    <article className={`${tones[tone]} rounded-[1.75rem] p-4 shadow-soft`}>
+      <p className="text-xs font-black uppercase tracking-[0.18em] opacity-70">{label}</p>
+      <div className="mt-2 text-3xl font-black tracking-tight">{value}</div>
+      {hint ? <p className="mt-1 text-sm font-semibold opacity-75">{hint}</p> : null}
+    </article>
+  );
+}
+</file>
+
+<file path="src/lib/supabase/client.ts">
+"use client";
+
+import { createBrowserClient } from "@supabase/ssr";
+import { supabaseAnonKey, supabaseUrl } from "@/lib/env";
+import type { Database } from "./types";
+
+export function createClient() {
+  return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
+}
+</file>
+
+<file path="src/lib/supabase/server.ts">
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+import { supabaseAnonKey, supabaseUrl } from "@/lib/env";
+import type { Database } from "./types";
+
+export async function createClient() {
+  const cookieStore = await cookies();
+
+  return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet: Array<{ name: string; value: string; options: Parameters<typeof cookieStore.set>[2] }>) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+        } catch {
+          // Server Components cannot persist cookies; middleware/API routes can reuse this helper safely.
+        }
+      }
+    }
+  });
+}
+</file>
+
+<file path="src/lib/supabase/types.ts">
+export type StickerStatus = "missing" | "duplicate";
+
+export type Database = {
+  public: {
+    Tables: {
+      profiles: {
+        Row: {
+          id: string;
+          full_name: string | null;
+          whatsapp: string | null;
+          city: string | null;
+          neighborhood: string | null;
+          exchange_point: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          full_name?: string | null;
+          whatsapp?: string | null;
+          city?: string | null;
+          neighborhood?: string | null;
+          exchange_point?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<Database["public"]["Tables"]["profiles"]["Insert"], "id">>;
+      };
+      stickers: {
+        Row: {
+          id: string;
+          code: string;
+          country: string | null;
+          player_name: string | null;
+          number: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          country?: string | null;
+          player_name?: string | null;
+          number?: number | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["stickers"]["Insert"]>;
+      };
+      user_stickers: {
+        Row: {
+          id: string;
+          user_id: string;
+          sticker_id: string;
+          status: StickerStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          sticker_id: string;
+          status: StickerStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<Database["public"]["Tables"]["user_stickers"]["Insert"], "id" | "user_id">>;
+      };
+    };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: {
+      sticker_status: StickerStatus;
+    };
+  };
+};
+
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type Sticker = Database["public"]["Tables"]["stickers"]["Row"];
+export type UserSticker = Database["public"]["Tables"]["user_stickers"]["Row"];
+</file>
+
+<file path="src/lib/env.ts">
+export const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://example.supabase.co";
+export const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "dev-placeholder-key";
+export const isSupabaseConfigured = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+</file>
+
+<file path="src/middleware.ts">
+import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { supabaseAnonKey, supabaseUrl } from "@/lib/env";
+import type { Database } from "@/lib/supabase/types";
+
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request
+  });
+
+  const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+
+        response = NextResponse.next({
+          request
+        });
+
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
+      }
+    }
+  });
+
+  await supabase.auth.getUser();
+
+  return response;
+}
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"]
+};
+</file>
+
+<file path="supabase/schema.sql">
+create extension if not exists "pgcrypto";
+
+create type public.sticker_status as enum ('missing', 'duplicate');
+
+create table public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  full_name text,
+  whatsapp text,
+  city text,
+  neighborhood text,
+  exchange_point text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table public.stickers (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  country text,
+  player_name text,
+  number integer,
+  created_at timestamptz not null default now(),
+  constraint stickers_code_not_empty check (length(trim(code)) > 0)
+);
+
+create table public.user_stickers (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  sticker_id uuid not null references public.stickers(id) on delete cascade,
+  status public.sticker_status not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, sticker_id)
+);
+
+create index user_stickers_user_status_idx on public.user_stickers (user_id, status);
+create index user_stickers_sticker_status_idx on public.user_stickers (sticker_id, status);
+create index profiles_location_idx on public.profiles (city, neighborhood);
+
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create trigger profiles_set_updated_at
+before update on public.profiles
+for each row execute function public.set_updated_at();
+
+create trigger user_stickers_set_updated_at
+before update on public.user_stickers
+for each row execute function public.set_updated_at();
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, full_name)
+  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)))
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
+
+alter table public.profiles enable row level security;
+alter table public.stickers enable row level security;
+alter table public.user_stickers enable row level security;
+
+create policy "Profiles are visible to authenticated users"
+on public.profiles for select
+to authenticated
+using (true);
+
+create policy "Users update own profile"
+on public.profiles for update
+to authenticated
+using (auth.uid() = id)
+with check (auth.uid() = id);
+
+create policy "Users insert own profile"
+on public.profiles for insert
+to authenticated
+with check (auth.uid() = id);
+
+create policy "Stickers are visible to authenticated users"
+on public.stickers for select
+to authenticated
+using (true);
+
+create policy "Authenticated users can create sticker codes"
+on public.stickers for insert
+to authenticated
+with check (true);
+
+create policy "Users read own stickers and public matching inventory"
+on public.user_stickers for select
+to authenticated
+using (true);
+
+create policy "Users insert own stickers"
+on public.user_stickers for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+create policy "Users update own stickers"
+on public.user_stickers for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+create policy "Users delete own stickers"
+on public.user_stickers for delete
+to authenticated
+using (auth.uid() = user_id);
+</file>
+
+<file path="next-env.d.ts">
+/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/app/api-reference/config/typescript for more information.
+</file>
+
+<file path="next.config.ts">
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  experimental: {
+    typedRoutes: true
+  }
+};
+
+export default nextConfig;
+</file>
+
+<file path="postcss.config.js">
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {}
+  }
+};
+</file>
+
+<file path="tailwind.config.ts">
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
+  theme: {
+    extend: {
+      colors: {
+        gold: "#F7C948",
+        ice: "#F8FAFC",
+        deep: "#12355B",
+        field: "#19A974",
+        ink: "#102033"
+      },
+      boxShadow: {
+        soft: "0 18px 50px rgba(18, 53, 91, 0.12)"
+      }
+    }
+  },
+  plugins: []
+};
+
+export default config;
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+</file>
+
+<file path="src/app/adicionar/page.tsx">
+import Link from "next/link";
+import { EmptyState } from "@/components/empty-state";
+import { RecentList } from "@/components/recent-list";
+import { SectionCard } from "@/components/section-card";
+import { SetupNotice } from "@/components/setup-notice";
+import { StickerForm } from "@/components/sticker-form";
+import { isSupabaseConfigured } from "@/lib/env";
+import { getCurrentUserId, getRecentUserStickers } from "@/lib/stickers";
+import { createClient } from "@/lib/supabase/server";
+export const dynamic = "force-dynamic";
+export default async function AddPage() {
+  if (!isSupabaseConfigured) {
+    return <SetupNotice />;
+  }
+
+  const supabase = await createClient();
+  const userId = await getCurrentUserId(supabase);
+
+  if (!userId) {
+    return <LoginPrompt />;
+  }
+
+  const recent = await getRecentUserStickers(supabase, userId, 8);
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <p className="text-sm font-black uppercase tracking-[0.2em] text-field">Adicionar</p>
+        <h2 className="text-3xl font-black text-deep">Digite o código e siga cadastrando.</h2>
+      </div>
+      <StickerForm />
+      <SectionCard title="Últimas adicionadas">
+        {recent.length ? <RecentList items={recent} /> : <EmptyState title="Nada por aqui" description="As figurinhas salvas aparecem aqui na hora." />}
+      </SectionCard>
+    </div>
+  );
+}
+
+function LoginPrompt() {
+  return (
+    <div className="space-y-4 rounded-[2rem] bg-white p-5 shadow-soft">
+      <h2 className="text-2xl font-black text-deep">Entre para salvar suas figurinhas</h2>
+      <p className="font-semibold text-ink/70">O cadastro fica ligado ao seu perfil e aos seus matches.</p>
+      <Link href="/login" className="flex min-h-14 items-center justify-center rounded-3xl bg-gold px-5 font-black text-deep">Entrar</Link>
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/trocas/page.tsx">
+import Link from "next/link";
+import { EmptyState } from "@/components/empty-state";
+import { MatchCard } from "@/components/match-card";
+import { SetupNotice } from "@/components/setup-notice";
+import { isSupabaseConfigured } from "@/lib/env";
+import { getCurrentUserId, getTradeMatches } from "@/lib/stickers";
+import { createClient } from "@/lib/supabase/server";
+export const dynamic = "force-dynamic";
+export default async function TradesPage() {
+  if (!isSupabaseConfigured) return <SetupNotice />;
+
+  const supabase = await createClient();
+  const userId = await getCurrentUserId(supabase);
+
+  if (!userId) {
+    return (
+      <div className="space-y-4 rounded-[2rem] bg-white p-5 shadow-soft">
+        <h2 className="text-2xl font-black text-deep">Entre para ver matches</h2>
+        <Link href="/login" className="flex min-h-14 items-center justify-center rounded-3xl bg-gold px-5 font-black text-deep">Entrar</Link>
+      </div>
+    );
+  }
+
+  const matches = await getTradeMatches(supabase, userId);
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <p className="text-sm font-black uppercase tracking-[0.2em] text-field">Trocas</p>
+        <h2 className="text-3xl font-black text-deep">Matches para chamar no WhatsApp.</h2>
+      </div>
+      {matches.length ? (
+        <div className="space-y-4">
+          {matches.map((match) => <MatchCard key={match.collector.id} match={match} />)}
+        </div>
+      ) : (
+        <EmptyState title="Nenhum match ainda" description="Cadastre faltantes e repetidas para cruzar com outros colecionadores." />
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/sticker-form.tsx">
+"use client";
+
+import { useActionState, useEffect, useRef, useState } from "react";
+import { saveSticker, type ActionState } from "@/app/actions";
+import type { StickerStatus } from "@/lib/supabase/types";
+
+const initialState: ActionState = { ok: false, message: "" };
+
+export function StickerForm() {
+  const [state, formAction, pending] = useActionState(saveSticker, initialState);
+  const [status, setStatus] = useState<StickerStatus>("missing");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (state.ok) formRef.current?.reset();
+    inputRef.current?.focus();
+  }, [state]);
+
+  const selectedLabel = status === "missing" ? "faltando" : "repetida";
+
+  return (
+    <form ref={formRef} action={formAction} className="space-y-4 rounded-[2rem] bg-white p-5 shadow-soft">
+      <div>
+        <label htmlFor="code" className="text-sm font-black uppercase tracking-[0.18em] text-deep/70">
+          Código da figurinha
+        </label>
+
+        <input
+          ref={inputRef}
+          id="code"
+          name="code"
+          inputMode="text"
+          autoCapitalize="characters"
+          autoComplete="off"
+          required
+          placeholder="BRA10"
+          className="mt-2 h-16 w-full rounded-3xl border-2 border-deep/10 bg-ice px-5 text-3xl font-black uppercase tracking-wide text-deep outline-none transition focus:border-field"
+        />
+
+        <p className="mt-2 text-sm font-semibold text-ink/60">
+          Exemplo: BRA10, ARG07, ESP18.
+        </p>
+      </div>
+
+      <input type="hidden" name="status" value={status} />
+
+      <div className="grid grid-cols-2 gap-3 rounded-3xl bg-ice p-2">
+        {([
+          ["missing", "Faltando", "Quero essa"],
+          ["duplicate", "Repetida", "Tenho para trocar"]
+        ] as const).map(([value, label, helper]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => {
+              setStatus(value);
+              inputRef.current?.focus();
+            }}
+            className={`min-h-16 rounded-2xl px-3 text-left transition ${
+              status === value ? "bg-deep text-white shadow-soft" : "bg-white text-deep"
+            }`}
+          >
+            <span className="block text-base font-black">{label}</span>
+            <span className="mt-1 block text-xs font-bold opacity-70">{helper}</span>
+          </button>
+        ))}
+      </div>
+
+      <button
+        type="submit"
+        disabled={pending}
+        className="min-h-16 w-full rounded-3xl bg-gold px-5 text-lg font-black text-deep shadow-soft disabled:opacity-60"
+      >
+        {pending ? "Salvando..." : `Salvar como ${selectedLabel}`}
+      </button>
+
+      {state.message ? (
+        <p
+          aria-live="polite"
+          className={`rounded-2xl px-4 py-3 text-sm font-bold ${
+            state.ok ? "bg-field/10 text-field" : "bg-red-50 text-red-700"
+          }`}
+        >
+          {state.ok ? `Boa! ${state.message}` : state.message}
+        </p>
+      ) : null}
+
+      <p className="text-center text-xs font-semibold text-ink/50">
+        Depois de salvar, o campo limpa sozinho para você continuar cadastrando.
+      </p>
+    </form>
+  );
+}
+</file>
+
+<file path=".gitignore">
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Directory for instrumented libs generated by jscoverage/JSCover
+lib-cov
+
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
+.grunt
+
+# Bower dependency directory (https://bower.io/)
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons (https://nodejs.org/api/addons.html)
+build/Release
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Snowpack dependency directory (https://snowpack.dev/)
+web_modules/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variable files
+.env
+.env.*
+!.env.example
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+out
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+.output
+
+# Gatsby files
+.cache/
+# Comment in the public line in if your project uses Gatsby and not Next.js
+# https://nextjs.org/blog/next-9-1#public-directory-support
+# public
+
+# vuepress build output
+.vuepress/dist
+
+# vuepress v2.x temp directory
+.temp
+
+# Sveltekit cache directory
+.svelte-kit/
+
+# vitepress build output
+**/.vitepress/dist
+
+# vitepress cache directory
+**/.vitepress/cache
+
+# Docusaurus cache and generated files
+.docusaurus
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# Firebase cache directory
+.firebase/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# pnpm
+.pnpm-store
+
+# yarn v3
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Vite files
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+.vite/
+
+# TrocaCopa local/runtime
+.env*.local
+.vercel
+</file>
+
+<file path="eslint.config.mjs">
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { FlatCompat } from "@eslint/eslintrc";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname
+});
+
+const eslintConfig = [
+  {
+    ignores: [".next/**", "node_modules/**"]
+  },
+  ...compat.extends("next/core-web-vitals", "next/typescript")
+];
+
+export default eslintConfig;
+</file>
+
+<file path="README.md">
+# TrocaCopa
+
+Aplicação web mobile-first para facilitar trocas reais de figurinhas da Copa. O colecionador cadastra figurinhas faltantes e repetidas por código, encontra matches com outros colecionadores e chama a pessoa pelo WhatsApp.
+
+## Stack travada para o MVP
+
+- Next.js `15.1.6` com App Router
+- React `19.0.0`
+- TypeScript `5.7.3`
+- Tailwind CSS `3.4.17`
+- ESLint `9.18.0` com `eslint-config-next` `15.1.6`
+- Supabase Auth/SSR/JS `0.6.1` e `2.48.1`
+- Supabase/PostgreSQL
+- Deploy futuro na Vercel
+
+As versões estão travadas no `package.json` para reduzir variação entre ambientes durante o MVP.
+
+## Funcionalidades do MVP
+
+- Login simples por magic link do Supabase Auth.
+- Perfil do colecionador com nome, WhatsApp, cidade, bairro e ponto de troca opcional.
+- Cadastro rápido de figurinhas por código como `faltando` ou `repetida`.
+- Home com progresso, repetidas, matches, CTA principal e bloco “Rolando agora”.
+- Tela Adicionar com input grande, limpeza automática, foco mantido e últimas adicionadas.
+- Tela Trocas com match perfeito/simples, “você ganha”, “você manda” e botão para WhatsApp quando informado.
+- Perfil com painel, progresso, atividade recente e chamada social orgânica.
+
+## Setup local
+
+1. Instale as dependências:
+
+```bash
+npm install
+```
+
+2. Crie `.env.local`:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anon
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+3. No Supabase, abra o SQL Editor e execute o arquivo:
+
+```bash
+supabase/schema.sql
+```
+
+4. Rode o app:
+
+```bash
+npm run dev
+```
+
+5. Acesse `http://localhost:3000` em viewport mobile.
+
+## Checklist de validação local
+
+Execute sempre nesta ordem antes de abrir PR:
+
+```bash
+npm install
+npm run lint
+npm run typecheck
+npm run build
+```
+
+## Status real dos checks neste ambiente
+
+- `npm install` com proxy configurado no ambiente falhou com `403 Forbidden` ao acessar o npm registry.
+- Uma segunda tentativa sem as variáveis de proxy não retornou resposta útil dentro do tempo operacional e foi interrompida.
+- `npm run lint` falhou porque `@eslint/eslintrc` não está instalado localmente sem `npm install`.
+- `npm run typecheck` falhou por ausência dos tipos/pacotes de `next`, `react`, `@supabase/*` e `@types/node`.
+- `npm run build` falhou porque o binário `next` não existe sem `node_modules`.
+- Por isso, esta entrega inclui revisão estática dos arquivos críticos, mas a validação completa precisa ser repetida em ambiente com acesso ao npm registry.
+
+## Estrutura principal
+
+```text
+src/app              Rotas do App Router
+src/components       Componentes mobile-first reutilizáveis
+src/lib/supabase     Clients Supabase e tipos do banco
+src/lib/stickers.ts  CRUD e matching inicial em TypeScript
+supabase/schema.sql  Schema PostgreSQL, RLS e triggers
+```
+
+## Modelo de dados
+
+- `profiles`: dados públicos do colecionador para contato e local de troca.
+- `stickers`: catálogo simples por código, com metadados opcionais.
+- `user_stickers`: relação do usuário com a figurinha e status `missing` ou `duplicate`.
+
+## Matching principal
+
+O matching principal do MVP está em `src/lib/stickers.ts`. O schema SQL não mantém uma segunda função de matching para evitar divergência de regra neste momento.
+
+O MVP considera:
+
+- **Match perfeito**: outra pessoa tem uma repetida que você precisa e também precisa de uma repetida sua.
+- **Match simples**: existe apenas um lado claro da troca, ainda útil para chamar no WhatsApp e combinar.
+
+## Riscos conhecidos do MVP
+
+- O progresso usa uma estimativa fixa de 670 figurinhas enquanto não houver catálogo oficial completo.
+- O matching em TypeScript é simples e adequado para o MVP, mas pode precisar migrar para função SQL/RPC quando houver maior volume de usuários e figurinhas.
+- A política de leitura de `user_stickers` permite consulta autenticada ampla para viabilizar matching inicial; deve ser revisitada antes de escala pública.
+- A validação completa depende de ambiente com acesso ao npm registry para gerar `package-lock.json` e executar os checks.
+
+## Restrições de produto mantidas
+
+Não há chat interno, marketplace, pontos, ranking, scanner, OCR, IA, geolocalização em tempo real ou recompensa por convite. O foco é combinar trocas reais pelo WhatsApp.
+</file>
+
+<file path="src/app/login/page.tsx">
+import { redirect } from "next/navigation";
+import { LoginForm } from "@/components/login-form";
+import { isSupabaseConfigured } from "@/lib/env";
+import { getCurrentUserId } from "@/lib/stickers";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+export default async function LoginPage() {
+  if (isSupabaseConfigured) {
+    const supabase = await createClient();
+    const userId = await getCurrentUserId(supabase);
+
+    if (userId) {
+      redirect("/");
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <section className="rounded-[2rem] bg-deep p-5 text-white shadow-soft">
+        <p className="text-sm font-black uppercase tracking-[0.2em] text-gold">
+          Entrar no TrocaCopa
+        </p>
+
+        <h2 className="mt-2 text-3xl font-black">
+          Acesse seu álbum em segundos.
+        </h2>
+
+        <p className="mt-3 font-semibold text-white/75">
+          Use sua conta Google para salvar figurinhas, completar seu perfil e encontrar trocas reais.
+        </p>
+      </section>
+
+      <LoginForm />
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/page.tsx">
+import Link from "next/link";
+import { EmptyState } from "@/components/empty-state";
+import { ProgressRing } from "@/components/progress-ring";
+import { RecentList } from "@/components/recent-list";
+import { SectionCard } from "@/components/section-card";
+import { SetupNotice } from "@/components/setup-notice";
+import { StatCard } from "@/components/stat-card";
+import { isSupabaseConfigured } from "@/lib/env";
+import { getCurrentUserId, getDashboardSummary } from "@/lib/stickers";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="space-y-5">
+        <Hero progress={34} duplicateTotal={18} matchTotal={6} />
+        <SetupNotice />
+      </div>
+    );
+  }
+
+  const supabase = await createClient();
+  const userId = await getCurrentUserId(supabase);
+
+  if (!userId) {
+    return (
+      <div className="space-y-5">
+        <Hero progress={0} duplicateTotal={0} matchTotal={0} />
+        <Link href="/login" className="flex min-h-16 items-center justify-center rounded-3xl bg-gold px-5 text-lg font-black text-deep shadow-soft">
+          Entrar para começar
+        </Link>
+      </div>
+    );
+  }
+
+  const summary = await getDashboardSummary(supabase, userId);
+
+  const isFirstTime =
+    summary.progress === 0 &&
+    summary.duplicateTotal === 0 &&
+    summary.matchTotal === 0;
+
+  return (
+    <div className="space-y-5">
+      <Hero progress={summary.progress} duplicateTotal={summary.duplicateTotal} matchTotal={summary.matchTotal} />
+
+      {isFirstTime ? (
+        <section className="space-y-4 rounded-[2rem] bg-white p-5 shadow-soft">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-field">
+              Comece agora
+            </p>
+            <h3 className="mt-2 text-2xl font-black text-deep">
+              Seu álbum ainda está vazio.
+            </h3>
+            <p className="mt-2 font-semibold text-ink/70">
+              Adicione suas primeiras figurinhas faltando ou repetidas para encontrar trocas reais.
+            </p>
+          </div>
+
+          <div className="space-y-3 rounded-2xl bg-ice p-4">
+            {[
+              "Adicione uma figurinha faltando",
+              "Adicione uma repetida",
+              "Encontre pessoas para trocar"
+            ].map((step, index) => (
+              <div key={step} className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold font-black text-deep">
+                  {index + 1}
+                </div>
+                <p className="font-bold text-deep">{step}</p>
+              </div>
+            ))}
+          </div>
+
+          <Link href="/adicionar" className="flex min-h-16 items-center justify-center rounded-3xl bg-gold px-5 text-lg font-black text-deep shadow-soft">
+            Adicionar primeira figurinha
+          </Link>
+        </section>
+      ) : null}
+
+      <Link href="/adicionar" className="flex min-h-16 items-center justify-center rounded-3xl bg-gold px-5 text-lg font-black text-deep shadow-soft">
+        Adicionar figurinha
+      </Link>
+
+      <SectionCard title="Rolando agora" action={<Link href="/trocas" className="text-sm font-black text-field">Ver trocas</Link>}>
+        {summary.recent.length ? (
+          <RecentList items={summary.recent} />
+        ) : (
+          <EmptyState title="Seu álbum começa aqui" description="Adicione faltantes e repetidas para encontrar trocas reais." />
+        )}
+      </SectionCard>
+    </div>
+  );
+}
+
+function Hero({ progress, duplicateTotal, matchTotal }: { progress: number; duplicateTotal: number; matchTotal: number }) {
+  return (
+    <section className="space-y-4 rounded-[2.25rem] bg-deep p-5 text-white shadow-soft">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-bold uppercase tracking-[0.22em] text-gold">Progresso do álbum</p>
+          <h2 className="mt-2 text-3xl font-black leading-tight">Trocas simples, direto no WhatsApp.</h2>
+        </div>
+        <ProgressRing value={progress} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <StatCard label="Repetidas" value={duplicateTotal} tone="gold" />
+        <StatCard label="Matches" value={matchTotal} tone="green" />
+      </div>
+    </section>
+  );
+}
+</file>
+
+<file path="src/components/bottom-nav.tsx">
+import Link from "next/link";
+
+const items = [
+  { href: "/", label: "Home", icon: "🏠" },
+  { href: "/adicionar", label: "Adicionar", icon: "➕" },
+  { href: "/album", label: "Álbum", icon: "📘" },
+  { href: "/trocas", label: "Trocas", icon: "🤝" },
+  { href: "/perfil", label: "Perfil", icon: "👤" }
+] as const;
+
+export function BottomNav() {
+  return (
+    <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-white/80 bg-deep/95 px-2 pt-2 text-white shadow-soft backdrop-blur">
+      <div className="grid grid-cols-5 gap-1">
+        {items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="flex min-h-16 flex-col items-center justify-center rounded-2xl px-1 text-[11px] font-bold active:bg-white/10"
+          >
+            <span className="text-xl" aria-hidden>
+              {item.icon}
+            </span>
+
+            <span className="mt-1">
+              {item.label}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </nav>
+  );
+}
+</file>
+
+<file path="src/components/match-card.tsx">
+"use client";
+
+import { registerExchangeIntentAction } from "@/app/actions";
+import type { TradeMatch } from "@/lib/stickers";
+
+function whatsappMessage(name: string | null, match: TradeMatch) {
+  const gain = match.youGain.length ? match.youGain.join(", ") : "algumas figurinhas";
+  const send = match.youSend.length ? match.youSend.join(", ") : "algumas repetidas";
+
+  return `Oi${name ? `, ${name}` : ""}! Vi nosso match no TrocaCopa. Eu preciso de ${gain} e posso trocar ${send}. Vamos combinar?`;
+}
+
+function whatsappUrl(phone: string, message: string) {
+  const digits = phone.replace(/\D/g, "");
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+}
+
+function CodeList({ codes, emptyLabel }: { codes: string[]; emptyLabel: string }) {
+  if (codes.length === 0) {
+    return <p className="text-sm font-bold text-ink/50">{emptyLabel}</p>;
+  }
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {codes.slice(0, 6).map((code) => (
+        <span
+          key={code}
+          className="rounded-full bg-white px-3 py-2 text-sm font-black text-deep shadow-sm"
+        >
+          {code}
+        </span>
+      ))}
+
+      {codes.length > 6 ? (
+        <span className="rounded-full bg-white px-3 py-2 text-sm font-black text-deep shadow-sm">
+          +{codes.length - 6}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+export function MatchCard({ match }: { match: TradeMatch }) {
+  const title = match.collector.full_name || "Colecionador";
+  const whatsappDigits = match.collector.whatsapp?.replace(/\D/g, "") ?? "";
+  const hasWhatsapp = whatsappDigits.length >= 10;
+  const isPerfect = match.kind === "perfect";
+  const message = whatsappMessage(title, match);
+  const url = whatsappUrl(whatsappDigits, message);
+  const matchScore = match.youGain.length + match.youSend.length;
+
+  function handleWhatsappClick() {
+    void registerExchangeIntentAction({
+      toUserId: match.collector.id,
+      matchScore,
+      whatsappMessage: message
+    });
+  }
+
+  return (
+    <article className="space-y-4 rounded-[2rem] bg-white p-5 shadow-soft">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xl font-black text-deep">{title}</p>
+
+          <p className="text-sm font-semibold text-ink/60">
+            {[match.collector.neighborhood, match.collector.city]
+              .filter(Boolean)
+              .join(" · ") || "Local a combinar"}
+          </p>
+        </div>
+
+        <span
+          className={`shrink-0 rounded-full px-3 py-2 text-xs font-black ${
+            isPerfect ? "bg-field text-white" : "bg-gold text-deep"
+          }`}
+        >
+          {isPerfect ? "Troca dupla" : "Oportunidade"}
+        </span>
+      </div>
+
+      <div className="space-y-3">
+        <div className="rounded-3xl bg-field/10 p-4">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-field">
+            Você recebe
+          </p>
+
+          <CodeList
+            codes={match.youGain}
+            emptyLabel="Essa pessoa ainda não tem repetida que você precisa."
+          />
+        </div>
+
+        <div className="rounded-3xl bg-gold/25 p-4">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-deep/60">
+            Você entrega
+          </p>
+
+          <CodeList
+            codes={match.youSend}
+            emptyLabel="Você ainda não tem repetida que essa pessoa precisa."
+          />
+        </div>
+      </div>
+
+      {match.collector.exchange_point ? (
+        <p className="rounded-2xl bg-ice px-4 py-3 text-sm font-bold text-ink/70">
+          Ponto sugerido: {match.collector.exchange_point}
+        </p>
+      ) : null}
+
+      {hasWhatsapp ? (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleWhatsappClick}
+          className="flex min-h-14 items-center justify-center rounded-3xl bg-deep px-5 text-base font-black text-white shadow-soft"
+        >
+          Chamar no WhatsApp
+        </a>
+      ) : (
+        <button
+          type="button"
+          disabled
+          className="min-h-14 w-full rounded-3xl bg-ink/10 px-5 text-base font-black text-ink/50"
+          aria-disabled="true"
+        >
+          WhatsApp não informado
+        </button>
+      )}
+    </article>
+  );
+}
+</file>
+
+<file path="package.json">
+{
+  "name": "troca-copa",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.6.1",
+    "@supabase/supabase-js": "2.48.1",
+    "clsx": "2.1.1",
+    "next": "^15.1.11",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "resend": "^6.12.3"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "3.2.0",
+    "@types/node": "22.10.7",
+    "@types/react": "19.0.7",
+    "@types/react-dom": "19.0.3",
+    "autoprefixer": "10.4.20",
+    "eslint": "9.18.0",
+    "eslint-config-next": "15.1.6",
+    "postcss": "8.5.1",
+    "tailwindcss": "3.4.17",
+    "typescript": "5.7.3"
+  }
+}
+</file>
+
+<file path="src/app/perfil/page.tsx">
+import Link from "next/link";
+import { EmptyState } from "@/components/empty-state";
+import { ProfileForm } from "@/components/profile-form";
+import { ProgressRing } from "@/components/progress-ring";
+import { RecentList } from "@/components/recent-list";
+import { SectionCard } from "@/components/section-card";
+import { SetupNotice } from "@/components/setup-notice";
+import { StatCard } from "@/components/stat-card";
+import { signOut } from "@/app/actions";
+import { isSupabaseConfigured } from "@/lib/env";
+import {
+  getCurrentUserId,
+  getDashboardSummary,
+  getProfile
+} from "@/lib/stickers";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+export default async function ProfilePage() {
+  if (!isSupabaseConfigured) return <SetupNotice />;
+
+  const supabase = await createClient();
+  const userId = await getCurrentUserId(supabase);
+
+  if (!userId) {
+    return (
+      <div className="space-y-4 rounded-[2rem] bg-white p-5 shadow-soft">
+        <h2 className="text-2xl font-black text-deep">
+          Entre para completar seu perfil
+        </h2>
+
+        <p className="font-semibold text-ink/70">
+          Seu WhatsApp e ponto de troca ajudam outros colecionadores a combinar
+          trocas reais.
+        </p>
+
+        <Link
+          href="/login"
+          className="flex min-h-14 items-center justify-center rounded-3xl bg-gold px-5 font-black text-deep"
+        >
+          Entrar
+        </Link>
+      </div>
+    );
+  }
+
+  const [profile, summary] = await Promise.all([
+    getProfile(supabase, userId),
+    getDashboardSummary(supabase, userId)
+  ]);
+
+  return (
+    <div className="space-y-5">
+      <section className="rounded-[2rem] bg-deep p-5 text-white shadow-soft">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-gold">
+              Perfil
+            </p>
+
+            <h2 className="mt-2 text-3xl font-black">
+              {profile?.full_name || "Colecionador"}
+            </h2>
+
+            <p className="mt-2 font-semibold text-white/70">
+              {[profile?.neighborhood, profile?.city]
+                .filter(Boolean)
+                .join(" · ") || "Complete sua localização de troca"}
+            </p>
+          </div>
+
+          <ProgressRing value={summary.progress} />
+        </div>
+      </section>
+
+      <div className="grid grid-cols-2 gap-3">
+        <StatCard label="Progresso" value={`${summary.progress}%`} />
+
+        <StatCard
+          label="Matches"
+          value={summary.matchTotal}
+          tone="green"
+        />
+      </div>
+
+      <SectionCard title="Painel do colecionador">
+        <ProfileForm profile={profile} />
+      </SectionCard>
+
+      <SectionCard title="Conta">
+        <div className="space-y-4">
+          <p className="font-semibold text-ink/70">
+            Você está conectado neste dispositivo.
+          </p>
+
+          <form action={signOut}>
+            <button
+              type="submit"
+              className="min-h-14 w-full rounded-3xl bg-red-50 px-5 font-black text-red-700 transition hover:bg-red-100"
+            >
+              Sair da conta
+            </button>
+          </form>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Atividade recente">
+        {summary.recent.length ? (
+          <RecentList items={summary.recent} />
+        ) : (
+          <EmptyState
+            title="Sem atividade"
+            description="Quando você adicionar códigos, eles aparecem aqui."
+          />
+        )}
+      </SectionCard>
+
+      <section className="rounded-[2rem] bg-gold p-5 text-deep shadow-soft">
+        <p className="text-2xl font-black">
+          Seus amigos podem ter sua próxima figurinha
+        </p>
+
+        <p className="mt-2 font-semibold">
+          Compartilhe seu WhatsApp e combine trocas reais,
+          sem pontos, ranking ou recompensa artificial.
+        </p>
+      </section>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/login-form.tsx">
+"use client";
+
+import { useActionState, useEffect, useState } from "react";
+import { signInWithEmail, signInWithGoogle, type ActionState } from "@/app/actions";
+
+const initialState: ActionState = { ok: false, message: "" };
+const COOLDOWN_SECONDS = 60;
+
+export function LoginForm() {
+  const [state, formAction, pending] = useActionState(signInWithEmail, initialState);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (state.ok) setCooldown(COOLDOWN_SECONDS);
+  }, [state.ok]);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+
+    const timer = window.setInterval(() => {
+      setCooldown((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [cooldown]);
+
+  const isDisabled = pending || cooldown > 0;
+
+  return (
+    <div className="space-y-4 rounded-[2rem] bg-white p-5 shadow-soft">
+      <form action={signInWithGoogle}>
+        <button
+          type="submit"
+          className="min-h-16 w-full rounded-3xl bg-deep px-5 text-lg font-black text-white shadow-soft"
+        >
+          Entrar com Google
+        </button>
+      </form>
+
+      <p className="rounded-2xl bg-ice px-4 py-3 text-center text-sm font-semibold text-ink/70">
+        Recomendado para entrar rápido e manter seu álbum salvo.
+      </p>
+
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-deep/10" />
+        <span className="text-xs font-black uppercase tracking-[0.18em] text-ink/50">
+          alternativa
+        </span>
+        <div className="h-px flex-1 bg-deep/10" />
+      </div>
+
+      <form action={formAction} className="space-y-4">
+        <label className="block">
+          <span className="text-sm font-black uppercase tracking-[0.18em] text-deep/70">
+            Receber link por e-mail
+          </span>
+
+          <input
+            name="email"
+            type="email"
+            placeholder="voce@email.com"
+            autoComplete="email"
+            required
+            className="mt-2 min-h-16 w-full rounded-3xl border-2 border-deep/10 bg-ice px-5 text-lg font-bold text-deep outline-none focus:border-field"
+          />
+        </label>
+
+        <button
+          type="submit"
+          disabled={isDisabled}
+          className="min-h-14 w-full rounded-3xl bg-gold/80 px-5 text-base font-black text-deep shadow-soft disabled:opacity-60"
+        >
+          {pending
+            ? "Enviando..."
+            : cooldown > 0
+            ? `Reenviar em ${cooldown}s`
+            : "Enviar link por e-mail"}
+        </button>
+
+        <p className="text-center text-xs font-semibold text-ink/50">
+          O e-mail pode demorar ou ter limite de envio. Prefira o Google.
+        </p>
+
+        {state.message ? (
+          <p
+            aria-live="polite"
+            className={`rounded-2xl px-4 py-3 text-sm font-bold ${
+              state.ok
+                ? "bg-field/10 text-field"
+                : "bg-red-50 text-red-700"
+            }`}
+          >
+            {state.message}
+          </p>
+        ) : null}
+      </form>
+    </div>
+  );
+}
+</file>
+
+<file path="src/lib/stickers.ts">
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Profile, StickerStatus } from "@/lib/supabase/types";
+
+type Client = SupabaseClient<Database>;
+type MatchInventoryRow = { status: StickerStatus; stickers: { code: string } | null };
+type MatchCandidateRow = { user_id: string; status: StickerStatus; stickers: { code: string } | null; profiles: Profile | null };
+
+type StickerWithCode = {
+  id: string;
+  status: StickerStatus;
+  created_at: string;
+  stickers: { id: string; code: string; country: string | null; player_name: string | null } | null;
+};
+
+export type DashboardSummary = {
+  progress: number;
+  missingTotal: number;
+  duplicateTotal: number;
+  matchTotal: number;
+  recent: StickerWithCode[];
+};
+
+export type TradeMatch = {
+  collector: Profile;
+  kind: "perfect" | "simple";
+  priority: "ideal" | "good" | "partial";
+  score: number;
+  youGain: string[];
+  youSend: string[];
+};
+
+function calculateMatchScore(match: Pick<TradeMatch, "kind" | "youGain" | "youSend">) {
+  const kindScore = match.kind === "perfect" ? 100 : 0;
+  const gainScore = match.youGain.length * 10;
+  const sendScore = match.youSend.length * 5;
+
+  return kindScore + gainScore + sendScore;
+}
+
+function getMatchPriority(score: number): TradeMatch["priority"] {
+  if (score >= 120) return "ideal";
+  if (score >= 20) return "good";
+  return "partial";
+}
+
+export async function getCurrentUserId(supabase: Client) {
+  const { data } = await supabase.auth.getUser();
+  return data.user?.id ?? null;
+}
+
+export async function getProfile(supabase: Client, userId: string) {
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function upsertProfile(supabase: Client, profile: Database["public"]["Tables"]["profiles"]["Insert"]) {
+  const { data, error } = await supabase.from("profiles").upsert(profile).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export function normalizeStickerCode(code: string) {
+  return code.replace(/[\s-]+/g, "").toUpperCase();
+}
+
+export async function ensureSticker(supabase: Client, code: string) {
+  const normalizedCode = normalizeStickerCode(code);
+  const { data: existing, error: lookupError } = await supabase
+    .from("stickers")
+    .select("*")
+    .eq("code", normalizedCode)
+    .maybeSingle();
+
+  if (lookupError) throw lookupError;
+  if (existing) return existing;
+
+  const { data, error } = await supabase.from("stickers").insert({ code: normalizedCode }).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function addUserSticker(supabase: Client, userId: string, code: string, status: StickerStatus) {
+  const sticker = await ensureSticker(supabase, code);
+  const oppositeStatus: StickerStatus = status === "missing" ? "duplicate" : "missing";
+
+  const { error: deleteOppositeError } = await supabase
+    .from("user_stickers")
+    .delete()
+    .eq("user_id", userId)
+    .eq("sticker_id", sticker.id)
+    .eq("status", oppositeStatus);
+
+  if (deleteOppositeError) throw deleteOppositeError;
+
+  const { data, error } = await supabase
+    .from("user_stickers")
+    .upsert(
+      { user_id: userId, sticker_id: sticker.id, status },
+      { onConflict: "user_id,sticker_id" }
+    )
+    .select("*, stickers(id, code, country, player_name)")
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function removeUserSticker(supabase: Client, userStickerId: string) {
+  const { error } = await supabase.from("user_stickers").delete().eq("id", userStickerId);
+  if (error) throw error;
+}
+
+export async function getRecentUserStickers(supabase: Client, userId: string, limit = 8) {
+  const { data, error } = await supabase
+    .from("user_stickers")
+    .select("id, status, created_at, stickers(id, code, country, player_name)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data ?? []) as unknown as StickerWithCode[];
+}
+export async function getAllUserStickers(supabase: Client, userId: string) {
+  const { data, error } = await supabase
+    .from("user_stickers")
+    .select("id, status, created_at, stickers(id, code, country, player_name)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as unknown as StickerWithCode[];
+}
+export async function getDashboardSummary(supabase: Client, userId: string): Promise<DashboardSummary> {
+  const [{ count: missingTotal }, { count: duplicateTotal }, recent, matches] = await Promise.all([
+    supabase.from("user_stickers").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "missing"),
+    supabase.from("user_stickers").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "duplicate"),
+    getRecentUserStickers(supabase, userId, 5),
+    getTradeMatches(supabase, userId)
+  ]);
+
+  const completed = Math.max(0, 670 - (missingTotal ?? 0));
+
+  return {
+    progress: Math.min(100, Math.round((completed / 670) * 100)),
+    missingTotal: missingTotal ?? 0,
+    duplicateTotal: duplicateTotal ?? 0,
+    matchTotal: matches.length,
+    recent
+  };
+}
+
+export async function getTradeMatches(supabase: Client, userId: string): Promise<TradeMatch[]> {
+  const { data: mine, error: mineError } = await supabase
+    .from("user_stickers")
+    .select("status, stickers(id, code)")
+    .eq("user_id", userId);
+
+  if (mineError) throw mineError;
+
+  const missingCodes = new Set(
+    ((mine ?? []) as unknown as MatchInventoryRow[])
+      .filter((item) => item.status === "missing" && item.stickers)
+      .map((item) => item.stickers!.code)
+  );
+
+  const duplicateCodes = new Set(
+    ((mine ?? []) as unknown as MatchInventoryRow[])
+      .filter((item) => item.status === "duplicate" && item.stickers)
+      .map((item) => item.stickers!.code)
+  );
+
+  if (missingCodes.size === 0 && duplicateCodes.size === 0) return [];
+
+  const { data: candidates, error } = await supabase
+    .from("user_stickers")
+    .select("user_id, status, stickers(code), profiles!user_stickers_user_id_fkey(*)")
+    .neq("user_id", userId)
+    .in("status", ["missing", "duplicate"]);
+
+  if (error) throw error;
+
+  const byCollector = new Map<string, TradeMatch>();
+
+  for (const row of (candidates ?? []) as unknown as MatchCandidateRow[]) {
+    const code = row.stickers?.code;
+    const profile = row.profiles;
+    if (!code || !profile) continue;
+
+    const givesMe = row.status === "duplicate" && missingCodes.has(code);
+    const receivesFromMe = row.status === "missing" && duplicateCodes.has(code);
+    if (!givesMe && !receivesFromMe) continue;
+
+    const current = byCollector.get(row.user_id) ?? {
+      collector: profile,
+      kind: "simple" as const,
+      priority: "partial" as const,
+      score: 0,
+      youGain: [],
+      youSend: []
+    };
+
+    if (givesMe && !current.youGain.includes(code)) current.youGain.push(code);
+    if (receivesFromMe && !current.youSend.includes(code)) current.youSend.push(code);
+
+    current.kind = current.youGain.length > 0 && current.youSend.length > 0 ? "perfect" : "simple";
+    current.score = calculateMatchScore(current);
+    current.priority = getMatchPriority(current.score);
+
+    byCollector.set(row.user_id, current);
+  }
+
+  return Array.from(byCollector.values()).sort((a, b) => b.score - a.score);
+}
+</file>
+
+<file path="src/app/actions.ts">
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { addUserSticker, getCurrentUserId, normalizeStickerCode, removeUserSticker, upsertProfile } from "@/lib/stickers";
+import { createClient } from "@/lib/supabase/server";
+import type { StickerStatus } from "@/lib/supabase/types";
+
+export type ActionState = {
+  ok: boolean;
+  message: string;
+};
+
+function requireString(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+export async function signInWithEmail(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const email = requireString(formData, "email");
+  if (!email) return { ok: false, message: "Informe seu e-mail para receber o link mágico." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`
+    }
+  });
+
+  if (error) {
+    const isRateLimit = error.message.toLowerCase().includes("rate limit");
+
+    return {
+      ok: false,
+      message: isRateLimit
+        ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos e use o último link recebido."
+        : "Não foi possível enviar o link agora. Tente novamente em instantes."
+    };
+  }
+
+  return { ok: true, message: "Enviamos um link de acesso para seu e-mail." };
+}
+
+export async function signInWithGoogle(): Promise<void> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`
+    }
+  });
+
+  if (error || !data.url) {
+    redirect("/login?auth=google_error");
+  }
+
+  redirect(data.url);
+}
+
+export async function saveSticker(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const code = normalizeStickerCode(requireString(formData, "code"));
+  const status = requireString(formData, "status") as StickerStatus;
+
+  if (!code) return { ok: false, message: "Digite o código da figurinha." };
+  if (status !== "missing" && status !== "duplicate") return { ok: false, message: "Escolha se ela está faltando ou repetida." };
+
+  const supabase = await createClient();
+  const userId = await getCurrentUserId(supabase);
+  if (!userId) redirect("/login");
+
+  try {
+    await addUserSticker(supabase, userId, code, status);
+    revalidatePath("/");
+    revalidatePath("/adicionar");
+    revalidatePath("/trocas");
+    revalidatePath("/perfil");
+
+    return { ok: true, message: `${code} salva como ${status === "missing" ? "faltando" : "repetida"}.` };
+  } catch (error) {
+    console.error("Erro ao salvar figurinha", error);
+    return { ok: false, message: "Não foi possível salvar essa figurinha. Confira o código e tente novamente." };
+  }
+}
+
+export async function saveProfile(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const supabase = await createClient();
+  const userId = await getCurrentUserId(supabase);
+  if (!userId) redirect("/login");
+
+  const fullName = requireString(formData, "full_name");
+  const whatsapp = requireString(formData, "whatsapp");
+  const city = requireString(formData, "city");
+  const neighborhood = requireString(formData, "neighborhood");
+
+  if (!fullName || !whatsapp || !city || !neighborhood) {
+    return { ok: false, message: "Preencha nome, WhatsApp, cidade e bairro para salvar o perfil." };
+  }
+
+  try {
+    await upsertProfile(supabase, {
+      id: userId,
+      full_name: fullName,
+      whatsapp,
+      city,
+      neighborhood,
+      exchange_point: requireString(formData, "exchange_point") || null
+    });
+
+    revalidatePath("/perfil");
+    revalidatePath("/trocas");
+    return { ok: true, message: "Perfil atualizado. Agora os colecionadores sabem como combinar a troca." };
+  } catch (error) {
+    console.error("Erro ao salvar perfil", error);
+    return { ok: false, message: "Não foi possível atualizar o perfil agora. Revise os dados e tente novamente." };
+  }
+}
+
+export async function signOut(): Promise<void> {
+  const supabase = await createClient();
+
+  await supabase.auth.signOut();
+
+  redirect("/login");
+}
+
+export type ExchangeIntentActionState = {
+  ok: boolean;
+};
+
+export async function registerExchangeIntentAction({
+  toUserId,
+  matchScore,
+  whatsappMessage
+}: {
+  toUserId: string;
+  matchScore: number;
+  whatsappMessage: string;
+}): Promise<ExchangeIntentActionState> {
+  const supabase = await createClient();
+  const userId = await getCurrentUserId(supabase);
+
+  if (!userId) {
+    return { ok: false };
+  }
+
+  const { error } = await supabase.from("exchange_intents").insert({
+    from_user_id: userId,
+    to_user_id: toUserId,
+    match_score: matchScore,
+    whatsapp_message: whatsappMessage
+  } as never);
+
+  if (error) {
+    console.error("Erro ao registrar intenção de troca", error);
+    return { ok: false };
+  }
+
+  return { ok: true };
+}
+
+export type RemoveStickerActionState = {
+  ok: boolean;
+  message: string;
+};
+
+export async function removeUserStickerAction(userStickerId: string): Promise<RemoveStickerActionState> {
+  const supabase = await createClient();
+  const userId = await getCurrentUserId(supabase);
+
+  if (!userId) {
+    return { ok: false, message: "Usuário não autenticado." };
+  }
+
+  try {
+    await removeUserSticker(supabase, userStickerId);
+
+    revalidatePath("/");
+    revalidatePath("/adicionar");
+    revalidatePath("/trocas");
+    revalidatePath("/perfil");
+
+    return { ok: true, message: "Figurinha removida." };
+  } catch (error) {
+    console.error("Erro ao remover figurinha", error);
+    return { ok: false, message: "Não foi possível remover a figurinha." };
+  }
+}
+</file>
+
+<file path="src/components/recent-list.tsx">
+import { removeUserStickerAction } from "@/app/actions";
+import type { StickerStatus } from "@/lib/supabase/types";
+
+type RecentItem = {
+  id: string;
+  status: StickerStatus;
+  created_at: string;
+  stickers: {
+    code: string;
+    country: string | null;
+    player_name: string | null;
+  } | null;
+};
+
+const STICKERS_PER_SELECTION = 20;
+
+const SELECTION_NAMES: Record<string, string> = {
+  MEX: "🇲🇽 México",
+  RSA: "🇿🇦 África do Sul",
+  KOR: "🇰🇷 Coreia do Sul",
+  CZE: "🇨🇿 República Tcheca",
+  CAN: "🇨🇦 Canadá",
+  BIH: "🇧🇦 Bósnia e Herzegovina",
+  QAT: "🇶🇦 Catar",
+  SUI: "🇨🇭 Suíça",
+  BRA: "🇧🇷 Brasil",
+  MAR: "🇲🇦 Marrocos",
+  HAI: "🇭🇹 Haiti",
+  SCO: "🏴 Escócia",
+  USA: "🇺🇸 Estados Unidos",
+  PAR: "🇵🇾 Paraguai",
+  AUS: "🇦🇺 Austrália",
+  TUR: "🇹🇷 Turquia",
+  GER: "🇩🇪 Alemanha",
+  CUW: "🇨🇼 Curaçao",
+  CIV: "🇨🇮 Costa do Marfim",
+  ECU: "🇪🇨 Equador",
+  NED: "🇳🇱 Holanda",
+  JPN: "🇯🇵 Japão",
+  SWE: "🇸🇪 Suécia",
+  TUN: "🇹🇳 Tunísia",
+  BEL: "🇧🇪 Bélgica",
+  EGY: "🇪🇬 Egito",
+  IRN: "🇮🇷 Irã",
+  NZL: "🇳🇿 Nova Zelândia",
+  ESP: "🇪🇸 Espanha",
+  CPV: "🇨🇻 Cabo Verde",
+  KSA: "🇸🇦 Arábia Saudita",
+  URU: "🇺🇾 Uruguai",
+  FRA: "🇫🇷 França",
+  SEN: "🇸🇳 Senegal",
+  IRQ: "🇮🇶 Iraque",
+  NOR: "🇳🇴 Noruega",
+  ARG: "🇦🇷 Argentina",
+  ALG: "🇩🇿 Argélia",
+  AUT: "🇦🇹 Áustria",
+  JOR: "🇯🇴 Jordânia",
+  POR: "🇵🇹 Portugal",
+  COD: "🇨🇩 RD Congo",
+  UZB: "🇺🇿 Uzbequistão",
+  COL: "🇨🇴 Colômbia",
+  ENG: "🏴 Inglaterra",
+  CRO: "🇭🇷 Croácia",
+  PAN: "🇵🇦 Panamá",
+  GHA: "🇬🇭 Gana"
+};
+
+function getSelectionPrefix(code: string) {
+  return code.replace(/[0-9]/g, "").toUpperCase();
+}
+
+function groupItems(items: RecentItem[]) {
+  return items.reduce<Record<string, RecentItem[]>>((acc, item) => {
+    const code = item.stickers?.code ?? "OUTRAS";
+    const prefix = getSelectionPrefix(code);
+
+    if (!acc[prefix]) {
+      acc[prefix] = [];
+    }
+
+    acc[prefix].push(item);
+
+    return acc;
+  }, {});
+}
+
+function SelectionProgress({
+  total,
+  status
+}: {
+  total: number;
+  status: StickerStatus;
+}) {
+  if (status === "duplicate") {
+    return (
+      <div className="flex flex-col items-end gap-1">
+        <span className="rounded-full bg-ice px-3 py-2 text-xs font-black text-deep">
+          {total} para troca
+        </span>
+
+        <span className="text-[10px] font-black uppercase tracking-[0.14em] text-ink/50">
+          disponíveis
+        </span>
+      </div>
+    );
+  }
+
+  const missingCount = total;
+  const completed = Math.max(0, STICKERS_PER_SELECTION - missingCount);
+  const percentage = Math.min(
+    Math.round((completed / STICKERS_PER_SELECTION) * 100),
+    100
+  );
+
+  return (
+    <div className="flex flex-col items-end gap-2">
+      <span className="rounded-full bg-ice px-3 py-2 text-xs font-black text-deep">
+        {completed} de {STICKERS_PER_SELECTION}
+      </span>
+
+      <div className="h-2 w-28 overflow-hidden rounded-full bg-ice">
+        <div
+          className="h-full rounded-full bg-field transition-all"
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+
+      <span className="text-[10px] font-black text-field">
+        Faltam {missingCount} · {percentage}%
+      </span>
+    </div>
+  );
+}
+
+function Section({
+  title,
+  items,
+  status
+}: {
+  title: string;
+  items: RecentItem[];
+  status: StickerStatus;
+}) {
+  if (!items.length) return null;
+
+  const grouped = groupItems(items);
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-black text-deep">{title}</h3>
+
+        <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-deep shadow-sm">
+          {items.length}
+        </span>
+      </div>
+
+      <div className="space-y-4">
+        {Object.entries(grouped).map(([prefix, selectionItems]) => {
+          const selectionName = SELECTION_NAMES[prefix] ?? prefix;
+          const total = selectionItems.length;
+
+          return (
+            <div key={prefix} className="rounded-[2rem] bg-white p-4 shadow-soft">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-lg font-black text-deep">
+                    {selectionName}
+                  </p>
+
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink/50">
+                    {prefix}
+                  </p>
+                </div>
+
+                <SelectionProgress total={total} status={status} />
+              </div>
+
+              <ul className="space-y-3">
+                {selectionItems.map((item, index) => {
+                  const actionLabel =
+                    item.status === "missing" ? "Consegui" : "Troquei";
+
+                  return (
+                    <li
+                      key={`${item.id}-${index}`}
+                      className="flex items-center justify-between gap-3 rounded-3xl bg-ice px-4 py-3"
+                    >
+                      <div>
+                        <p className="text-lg font-black text-deep">
+                          {item.stickers?.code ?? "Sem código"}
+                        </p>
+
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink/50">
+                          {status === "missing" ? "faltando" : "repetida"}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span
+                          className={`rounded-full px-3 py-2 text-xs font-black ${
+                            status === "missing"
+                              ? "bg-gold text-deep"
+                              : "bg-field text-white"
+                          }`}
+                        >
+                          {status === "missing" ? "Quero" : "Tenho"}
+                        </span>
+
+                        <form
+                          action={async () => {
+                            "use server";
+                            await removeUserStickerAction(item.id);
+                          }}
+                        >
+                          <button
+                            type="submit"
+                            className="min-h-10 rounded-2xl bg-white px-3 text-xs font-black text-deep/70 shadow-sm"
+                          >
+                            {actionLabel}
+                          </button>
+                        </form>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+export function RecentList({ items }: { items: RecentItem[] }) {
+  if (items.length === 0) {
+    return (
+      <p className="text-sm font-semibold text-ink/60">
+        Nenhuma figurinha adicionada ainda.
+      </p>
+    );
+  }
+
+  const missingItems = items.filter((item) => item.status === "missing");
+  const duplicateItems = items.filter((item) => item.status === "duplicate");
+
+  return (
+    <div className="space-y-6">
+      <Section title="🎯 Procurando" items={missingItems} status="missing" />
+
+      <Section
+        title="🤝 Disponíveis para troca"
+        items={duplicateItems}
+        status="duplicate"
+      />
+    </div>
+  );
+}
+</file>
+
+</files>

@@ -55,17 +55,20 @@ export async function getProfile(supabase: Client, userId: string) {
 }
 
 export async function upsertProfile(supabase: Client, profile: Database["public"]["Tables"]["profiles"]["Insert"]) {
-  const { data, error } = await supabase.from("profiles").upsert(profile).select().single();
+  const { data, error = null } = await supabase.from("profiles").upsert(profile).select().single();
   if (error) throw error;
   return data;
 }
 
+// 🔥 FUNÇÃO CORRIGIDA: Remove absolutamente tudo o que não for letra ou número (limpa pontuações grudadas)
 export function normalizeStickerCode(code: string) {
-  return code.replace(/[\s-]+/g, "").toUpperCase();
+  return code.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
 }
 
 export async function ensureSticker(supabase: Client, code: string) {
   const normalizedCode = normalizeStickerCode(code);
+  if (!normalizedCode) throw new Error("Código inválido");
+
   const { data: existing, error: lookupError } = await supabase
     .from("stickers")
     .select("*")
@@ -106,6 +109,40 @@ export async function addUserSticker(supabase: Client, userId: string, code: str
   return data;
 }
 
+export async function addUserStickersBatch(supabase: Client, userId: string, codes: string[], status: StickerStatus) {
+  const oppositeStatus: StickerStatus = status === "missing" ? "duplicate" : "missing";
+  const savedStickers: StickerWithCode[] = [];
+
+  for (const code of codes) {
+    // Normaliza antes de qualquer checagem no loop
+    const cleanCode = normalizeStickerCode(code);
+    if (!cleanCode) continue;
+
+    const sticker = await ensureSticker(supabase, cleanCode);
+
+    await supabase
+      .from("user_stickers")
+      .delete()
+      .eq("user_id", userId)
+      .eq("sticker_id", sticker.id)
+      .eq("status", oppositeStatus);
+
+    const { data, error } = await supabase
+      .from("user_stickers")
+      .upsert(
+        { user_id: userId, sticker_id: sticker.id, status },
+        { onConflict: "user_id,sticker_id" }
+      )
+      .select("*, stickers(id, code, country, player_name)")
+      .single();
+
+    if (error) throw error;
+    if (data) savedStickers.push(data as unknown as StickerWithCode);
+  }
+
+  return savedStickers;
+}
+
 export async function removeUserSticker(supabase: Client, userStickerId: string) {
   const { error } = await supabase.from("user_stickers").delete().eq("id", userStickerId);
   if (error) throw error;
@@ -122,6 +159,7 @@ export async function getRecentUserStickers(supabase: Client, userId: string, li
   if (error) throw error;
   return (data ?? []) as unknown as StickerWithCode[];
 }
+
 export async function getAllUserStickers(supabase: Client, userId: string) {
   const { data, error } = await supabase
     .from("user_stickers")
@@ -132,6 +170,7 @@ export async function getAllUserStickers(supabase: Client, userId: string) {
   if (error) throw error;
   return (data ?? []) as unknown as StickerWithCode[];
 }
+
 export async function getDashboardSummary(supabase: Client, userId: string): Promise<DashboardSummary> {
   const [{ count: missingTotal }, { count: duplicateTotal }, recent, matches] = await Promise.all([
     supabase.from("user_stickers").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "missing"),

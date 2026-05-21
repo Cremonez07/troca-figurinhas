@@ -1,8 +1,8 @@
 "use server";
-
+QUEBRA_O_APP_AGORA_POR_FAVOR
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { addUserSticker, getCurrentUserId, normalizeStickerCode, removeUserSticker, upsertProfile } from "@/lib/stickers";
+import { addUserSticker, getCurrentUserId, removeUserSticker, upsertProfile } from "@/lib/stickers";
 import { createClient } from "@/lib/supabase/server";
 import type { StickerStatus } from "@/lib/supabase/types";
 
@@ -34,7 +34,7 @@ export async function signInWithEmail(_prev: ActionState, formData: FormData): P
     return {
       ok: false,
       message: isRateLimit
-        ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos e use o último link recebido."
+        ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos e use o link recebido."
         : "Não foi possível enviar o link agora. Tente novamente em instantes."
     };
   }
@@ -59,28 +59,51 @@ export async function signInWithGoogle(): Promise<void> {
   redirect(data.url);
 }
 
+// 🔥 SAVE STICKER COM TESTE DE SANIDADE DA GEM ARCHITECT
 export async function saveSticker(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const code = normalizeStickerCode(requireString(formData, "code"));
+  // LOG DE SINALIZAÇÃO PARA REVISÃO NO TERMINAL DO CODESPACES:
+  console.log("🚨 ALERTA GERAL: CONSEGUI ACESSAR A ACTION NOVA COM REGEX!");
+
+  const rawCodeInput = requireString(formData, "code");
   const status = requireString(formData, "status") as StickerStatus;
 
-  if (!code) return { ok: false, message: "Digite o código da figurinha." };
-  if (status !== "missing" && status !== "duplicate") return { ok: false, message: "Escolha se ela está faltando ou repetida." };
+  if (!rawCodeInput) return { ok: false, message: "Digite o código da figurinha." };
+  if (status !== "missing" && status !== "duplicate") {
+    return { ok: false, message: "Escolha se ela está faltando ou repetida." };
+  }
 
   const supabase = await createClient();
   const userId = await getCurrentUserId(supabase);
   if (!userId) redirect("/login");
 
+  const stickerRegex = /[A-Z]{3}\d+/g;
+  const cleanInput = rawCodeInput.toUpperCase();
+  const matchedCodes = cleanInput.match(stickerRegex);
+
+  if (!matchedCodes || matchedCodes.length === 0) {
+    return { ok: false, message: "Nenhum código de figurinha válido encontrado (Ex: BRA10, ARG07)." };
+  }
+
   try {
-    await addUserSticker(supabase, userId, code, status);
+    for (const individualCode of matchedCodes) {
+      await addUserSticker(supabase, userId, individualCode, status);
+    }
+
     revalidatePath("/");
     revalidatePath("/adicionar");
     revalidatePath("/trocas");
     revalidatePath("/perfil");
 
-    return { ok: true, message: `${code} salva como ${status === "missing" ? "faltando" : "repetida"}.` };
+    const totalSaved = matchedCodes.length;
+    return {
+      ok: true,
+      message: totalSaved > 1
+        ? `${totalSaved} figurinhas salvas como ${status === "missing" ? "faltando" : "repetidas"} (${matchedCodes.join(", ")}).`
+        : `${matchedCodes[0]} salva como ${status === "missing" ? "faltando" : "repetida"}.`
+    };
   } catch (error) {
-    console.error("Erro ao salvar figurinha", error);
-    return { ok: false, message: "Não foi possível salvar essa figurinha. Confira o código e tente novamente." };
+    console.error("Erro ao salvar lote de figurinhas:", error);
+    return { ok: false, message: "Não foi possível salvar as figurinhas. Tente novamente." };
   }
 }
 
@@ -110,7 +133,7 @@ export async function saveProfile(_prev: ActionState, formData: FormData): Promi
 
     revalidatePath("/perfil");
     revalidatePath("/trocas");
-    return { ok: true, message: "Perfil atualizado. Agora os colecionadores sabem como combinar a troca." };
+    return { ok: true, message: "Perfil atualizado com sucesso." };
   } catch (error) {
     console.error("Erro ao salvar perfil", error);
     return { ok: false, message: "Não foi possível atualizar o perfil agora. Revise os dados e tente novamente." };
@@ -119,9 +142,7 @@ export async function saveProfile(_prev: ActionState, formData: FormData): Promi
 
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
-
   await supabase.auth.signOut();
-
   redirect("/login");
 }
 

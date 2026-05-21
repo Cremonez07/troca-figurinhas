@@ -65,8 +65,10 @@ const SELECTION_NAMES: Record<string, string> = {
   GHA: "🇬🇭 Gana"
 };
 
+// 🔥 FUNÇÃO BLINDADA: Garante o retorno apenas das letras válidas da seleção (ex: BRA), ignorando pontuações pendentes
 function getSelectionPrefix(code: string) {
-  return code.replace(/[0-9]/g, "").toUpperCase();
+  const match = code.match(/^[A-Z]+/i);
+  return match ? match[0].toUpperCase() : "OUTRAS";
 }
 
 function groupItems(items: RecentItem[]) {
