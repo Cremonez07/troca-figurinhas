@@ -60,12 +60,15 @@ export async function upsertProfile(supabase: Client, profile: Database["public"
   return data;
 }
 
+// 🔥 FUNÇÃO CORRIGIDA: Remove absolutamente tudo o que não for letra ou número (limpa pontuações grudadas)
 export function normalizeStickerCode(code: string) {
-  return code.replace(/[\s-]+/g, "").toUpperCase();
+  return code.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
 }
 
 export async function ensureSticker(supabase: Client, code: string) {
   const normalizedCode = normalizeStickerCode(code);
+  if (!normalizedCode) throw new Error("Código inválido");
+
   const { data: existing, error: lookupError } = await supabase
     .from("stickers")
     .select("*")
@@ -106,13 +109,16 @@ export async function addUserSticker(supabase: Client, userId: string, code: str
   return data;
 }
 
-// 🔥 NOVA FUNÇÃO EXTRA: Salva várias figurinhas de uma vez só loopando o banco
 export async function addUserStickersBatch(supabase: Client, userId: string, codes: string[], status: StickerStatus) {
   const oppositeStatus: StickerStatus = status === "missing" ? "duplicate" : "missing";
   const savedStickers: StickerWithCode[] = [];
 
   for (const code of codes) {
-    const sticker = await ensureSticker(supabase, code);
+    // Normaliza antes de qualquer checagem no loop
+    const cleanCode = normalizeStickerCode(code);
+    if (!cleanCode) continue;
+
+    const sticker = await ensureSticker(supabase, cleanCode);
 
     await supabase
       .from("user_stickers")
