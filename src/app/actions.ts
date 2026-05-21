@@ -1,5 +1,5 @@
 "use server";
-
+QUEBRA_O_APP_AGORA_POR_FAVOR
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { addUserSticker, getCurrentUserId, removeUserSticker, upsertProfile } from "@/lib/stickers";
