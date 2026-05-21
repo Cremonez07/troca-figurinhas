@@ -59,8 +59,11 @@ export async function signInWithGoogle(): Promise<void> {
   redirect(data.url);
 }
 
-// 🔥 ARQUITETURA EM LOTE CORRIGIDA: Interceptação cirúrgica com Regex agnóstica a delimitadores
+// 🔥 SAVE STICKER COM TESTE DE SANIDADE DA GEM ARCHITECT
 export async function saveSticker(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  // LOG DE SINALIZAÇÃO PARA REVISÃO NO TERMINAL DO CODESPACES:
+  console.log("🚨 ALERTA GERAL: CONSEGUI ACESSAR A ACTION NOVA COM REGEX!");
+
   const rawCodeInput = requireString(formData, "code");
   const status = requireString(formData, "status") as StickerStatus;
 
@@ -73,7 +76,6 @@ export async function saveSticker(_prev: ActionState, formData: FormData): Promi
   const userId = await getCurrentUserId(supabase);
   if (!userId) redirect("/login");
 
-  // Expressão regular: captura 3 letras seguidas de 1 ou mais dígitos (ex: BRA10, ARG7, ESP123)
   const stickerRegex = /[A-Z]{3}\d+/g;
   const cleanInput = rawCodeInput.toUpperCase();
   const matchedCodes = cleanInput.match(stickerRegex);
@@ -83,12 +85,10 @@ export async function saveSticker(_prev: ActionState, formData: FormData): Promi
   }
 
   try {
-    // Processamento sequencial controlado para evitar concorrência destrutiva no banco
     for (const individualCode of matchedCodes) {
       await addUserSticker(supabase, userId, individualCode, status);
     }
 
-    // Revalidação de cache sob demanda do Next.js 15
     revalidatePath("/");
     revalidatePath("/adicionar");
     revalidatePath("/trocas");
