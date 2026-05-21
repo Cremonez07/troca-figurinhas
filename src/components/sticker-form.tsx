@@ -9,7 +9,8 @@ const initialState: ActionState = { ok: false, message: "" };
 export function StickerForm() {
   const [state, formAction, pending] = useActionState(saveSticker, initialState);
   const [status, setStatus] = useState<StickerStatus>("missing");
-  const inputRef = useRef<HTMLInputElement>(null);
+  // 🔥 Ajustado o tipo da referência para caixa de texto longa (textarea)
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -23,10 +24,11 @@ export function StickerForm() {
     <form ref={formRef} action={formAction} className="space-y-4 rounded-[2rem] bg-white p-5 shadow-soft">
       <div>
         <label htmlFor="code" className="text-sm font-black uppercase tracking-[0.18em] text-deep/70">
-          Código da figurinha
+          Códigos das figurinhas
         </label>
 
-        <input
+        {/* 🔥 Trocado de <input> para <textarea> para comportar a digitação em lote */}
+        <textarea
           ref={inputRef}
           id="code"
           name="code"
@@ -34,12 +36,13 @@ export function StickerForm() {
           autoCapitalize="characters"
           autoComplete="off"
           required
-          placeholder="BRA10"
-          className="mt-2 h-16 w-full rounded-3xl border-2 border-deep/10 bg-ice px-5 text-3xl font-black uppercase tracking-wide text-deep outline-none transition focus:border-field"
+          rows={2}
+          placeholder="BRA10, ARG07, ESP18"
+          className="mt-2 w-full rounded-3xl border-2 border-deep/10 bg-ice p-5 text-2xl font-black uppercase tracking-wide text-deep outline-none transition focus:border-field resize-none min-h-[5rem]"
         />
 
         <p className="mt-2 text-sm font-semibold text-ink/60">
-          Exemplo: BRA10, ARG07, ESP18.
+          Digite vários códigos separados por vírgula, espaço ou quebra de linha.
         </p>
       </div>
 

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { addUserSticker, getCurrentUserId, normalizeStickerCode, removeUserSticker, upsertProfile } from "@/lib/stickers";
+import { addUserStickersBatch, getCurrentUserId, normalizeStickerCode, removeUserSticker, upsertProfile } from "@/lib/stickers";
 import { createClient } from "@/lib/supabase/server";
 import type { StickerStatus } from "@/lib/supabase/types";
 
@@ -59,28 +59,43 @@ export async function signInWithGoogle(): Promise<void> {
   redirect(data.url);
 }
 
+// 🔥 FUNÇÃO ATUALIZADA: Agora aceita múltiplos códigos separados por espaço, vírgula ou quebra de linha
 export async function saveSticker(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const code = normalizeStickerCode(requireString(formData, "code"));
+  const rawCodes = requireString(formData, "code");
   const status = requireString(formData, "status") as StickerStatus;
 
-  if (!code) return { ok: false, message: "Digite o código da figurinha." };
+  if (!rawCodes) return { ok: false, message: "Digite ao menos um código de figurinha." };
   if (status !== "missing" && status !== "duplicate") return { ok: false, message: "Escolha se ela está faltando ou repetida." };
+
+  // Separa o texto por espaços, vírgulas, ponto e vírgulas ou quebras de linha
+  const codes = rawCodes
+    .split(/[\s,;\n]+/)
+    .map((c) => normalizeStickerCode(c))
+    .filter((c) => c.length > 0);
+
+  if (codes.length === 0) return { ok: false, message: "Nenhum código válido foi digitado." };
 
   const supabase = await createClient();
   const userId = await getCurrentUserId(supabase);
   if (!userId) redirect("/login");
 
   try {
-    await addUserSticker(supabase, userId, code, status);
+    // Chama a nossa nova função em lote do arquivo stickers.ts
+    await addUserStickersBatch(supabase, userId, codes, status);
+    
     revalidatePath("/");
     revalidatePath("/adicionar");
     revalidatePath("/trocas");
     revalidatePath("/perfil");
 
-    return { ok: true, message: `${code} salva como ${status === "missing" ? "faltando" : "repetida"}.` };
+    const plural = codes.length > 1;
+    return { 
+      ok: true, 
+      message: `${codes.join(", ")} ${plural ? "salvas" : "salva"} como ${status === "missing" ? "faltando" : "repetida"}.` 
+    };
   } catch (error) {
-    console.error("Erro ao salvar figurinha", error);
-    return { ok: false, message: "Não foi possível salvar essa figurinha. Confira o código e tente novamente." };
+    console.error("Erro ao salvar figurinhas em lote", error);
+    return { ok: false, message: "Não foi possível salvar as figurinhas. Confira os códigos e tente novamente." };
   }
 }
 
@@ -110,7 +125,7 @@ export async function saveProfile(_prev: ActionState, formData: FormData): Promi
 
     revalidatePath("/perfil");
     revalidatePath("/trocas");
-    return { ok: true, message: "Perfil atualizado. Agora os colecionadores sabem como combinar a troca." };
+    return { ok: true, message: "Perfil updated. Agora os colecionadores sabem como combinar a troca." };
   } catch (error) {
     console.error("Erro ao salvar perfil", error);
     return { ok: false, message: "Não foi possível atualizar o perfil agora. Revise os dados e tente novamente." };
