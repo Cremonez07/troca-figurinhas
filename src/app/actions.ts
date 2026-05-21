@@ -11,7 +11,7 @@ export type ActionState = {
   message: string;
 };
 
-function requireString(formData: FormData, key: string) {
+function requireString(formData: FormData, key: string): string {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
 }
@@ -69,7 +69,6 @@ export async function saveSticker(_prev: ActionState, formData: FormData): Promi
   const userId = await getCurrentUserId(supabase);
   if (!userId) redirect("/login");
 
-  // Regex para capturar padrões de figurinhas coladas ou separadas
   const stickerRegex = /[A-Z]{3}\d+/g;
   const cleanInput = rawCodeInput.toUpperCase();
   const matchedCodes = cleanInput.match(stickerRegex);
