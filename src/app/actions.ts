@@ -69,7 +69,7 @@ export async function saveSticker(_prev: ActionState, formData: FormData): Promi
   const userId = await getCurrentUserId(supabase);
   if (!userId) redirect("/login");
 
-  // Regex: Filtra padrões como BRA10, ARG02, de forma grudada ou separada
+  // Regex para capturar padrões de figurinhas coladas ou separadas
   const stickerRegex = /[A-Z]{3}\d+/g;
   const cleanInput = rawCodeInput.toUpperCase();
   const matchedCodes = cleanInput.match(stickerRegex);
@@ -79,7 +79,6 @@ export async function saveSticker(_prev: ActionState, formData: FormData): Promi
   }
 
   try {
-    // Laço sequencial seguro para salvar cada código identificado no lote
     for (const individualCode of matchedCodes) {
       await addUserSticker(supabase, userId, individualCode, status);
     }
@@ -128,7 +127,7 @@ export async function saveProfile(_prev: ActionState, formData: FormData): Promi
 
     revalidatePath("/perfil");
     revalidatePath("/trocas");
-    return { ok: true, message: "Perfil updated. Agora os colecionadores sabem como combinar a troca." };
+    return { ok: true, message: "Perfil atualizado. Agora os colecionadores sabem como combinar a troca." };
   } catch (error) {
     console.error("Erro ao salvar perfil", error);
     return { ok: false, message: "Não foi possível atualizar o perfil agora." };
