@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { addUserStickersBatch, getCurrentUserId, normalizeStickerCode, removeUserSticker, upsertProfile } from "@/lib/stickers";
+import { addUserSticker, getCurrentUserId, removeUserSticker, upsertProfile } from "@/lib/stickers";
 import { createClient } from "@/lib/supabase/server";
 import type { StickerStatus } from "@/lib/supabase/types";
 
@@ -59,47 +59,50 @@ export async function signInWithGoogle(): Promise<void> {
   redirect(data.url);
 }
 
-// 🔥 VERSÃO BLINDADA: Substitui qualquer separador e caractere invisível por espaço simples antes do split
+// 🔥 IMPLEMENTAÇÃO DA GEM ARCHITECT: Captura os códigos por padrão de letras e números
 export async function saveSticker(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const rawCodes = requireString(formData, "code");
+  const rawCodeInput = requireString(formData, "code");
   const status = requireString(formData, "status") as StickerStatus;
 
-  if (!rawCodes) return { ok: false, message: "Digite ao menos um código de figurinha." };
-  if (status !== "missing" && status !== "duplicate") return { ok: false, message: "Escolha se ela está faltando ou repetida." };
-
-  // 1. Força a troca de pontuações, quebras de linha e tabulações por espaços simples
-  const cleanInput = rawCodes
-    .replace(/[;,/\-_]/g, " ")
-    .replace(/[\n\r\t]/g, " ");
-
-  // 2. Quebra por qualquer sequência de espaços e remove os blocos vazios
-  const codes = cleanInput
-    .split(/\s+/)
-    .map((c) => normalizeStickerCode(c))
-    .filter((c) => c.length > 0 && c !== "undefined");
-
-  if (codes.length === 0) return { ok: false, message: "Nenhum código válido foi digitado." };
+  if (!rawCodeInput) return { ok: false, message: "Digite o código da(s) figurinha(s)." };
+  if (status !== "missing" && status !== "duplicate") {
+    return { ok: false, message: "Escolha se ela está faltando ou repetida." };
+  }
 
   const supabase = await createClient();
   const userId = await getCurrentUserId(supabase);
   if (!userId) redirect("/login");
 
+  // Regex genial que separa os padrões (Ex: BRA10, ARG07) mesmo colados ou com símbolos
+  const stickerRegex = /[A-Z]{3}\d{2,3}/g;
+  const sanitizedInput = rawCodeInput.toUpperCase().replace(/[\s-]+/g, "");
+  const matchedCodes = sanitizedInput.match(stickerRegex);
+
+  if (!matchedCodes || matchedCodes.length === 0) {
+    return { ok: false, message: "Nenhum código de figurinha válido encontrado (Ex: BRA10, ARG07)." };
+  }
+
   try {
-    await addUserStickersBatch(supabase, userId, codes, status);
-    
+    // Executa em lote aproveitando as travas de segurança originais do core
+    await Promise.all(
+      matchedCodes.map((code) => addUserSticker(supabase, userId, code, status))
+    );
+
+    // Revalidação do Next.js 15
     revalidatePath("/");
     revalidatePath("/adicionar");
     revalidatePath("/trocas");
     revalidatePath("/perfil");
 
-    const plural = codes.length > 1;
-    return { 
-      ok: true, 
-      message: `${codes.join(", ")} ${plural ? "salvas" : "salva"} como ${status === "missing" ? "faltando" : "repetida"}.` 
-    };
+    const totalSaved = matchedCodes.length;
+    const messageFeedback = totalSaved > 1 
+      ? `${totalSaved} figurinhas salvas como ${status === "missing" ? "faltando" : "repetidas"} (${matchedCodes.join(", ")}).`
+      : `${matchedCodes[0]} salva como ${status === "missing" ? "faltando" : "repetida"}.`;
+
+    return { ok: true, message: messageFeedback };
   } catch (error) {
-    console.error("Erro ao salvar figurinhas em lote", error);
-    return { ok: false, message: "Não foi possível salvar as figurinhas. Confira os códigos e tente novamente." };
+    console.error("Erro ao salvar lote de figurinhas:", error);
+    return { ok: false, message: "Não foi possível salvar as figurinhas. Revise os códigos inseridos." };
   }
 }
 
