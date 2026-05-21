@@ -34,7 +34,7 @@ export async function signInWithEmail(_prev: ActionState, formData: FormData): P
     return {
       ok: false,
       message: isRateLimit
-        ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos e use o Executar link recebido."
+        ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos e use o link recebido."
         : "Não foi possível enviar o link agora. Tente novamente em instantes."
     };
   }
@@ -59,7 +59,7 @@ export async function signInWithGoogle(): Promise<void> {
   redirect(data.url);
 }
 
-// 🔥 FUNÇÃO CORRIGIDA: Agora separa de forma agressiva por qualquer símbolo comum antes de limpar o código
+// 🔥 VERSÃO BLINDADA: Substitui qualquer separador e caractere invisível por espaço simples antes do split
 export async function saveSticker(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const rawCodes = requireString(formData, "code");
   const status = requireString(formData, "status") as StickerStatus;
@@ -67,14 +67,16 @@ export async function saveSticker(_prev: ActionState, formData: FormData): Promi
   if (!rawCodes) return { ok: false, message: "Digite ao menos um código de figurinha." };
   if (status !== "missing" && status !== "duplicate") return { ok: false, message: "Escolha se ela está faltando ou repetida." };
 
-  // Substitui pontos e vírgulas, barras ou traços por espaços para garantir isolamento completo
-  const cleanInput = rawCodes.replace(/[;,/\-_]/g, " ");
+  // 1. Força a troca de pontuações, quebras de linha e tabulações por espaços simples
+  const cleanInput = rawCodes
+    .replace(/[;,/\-_]/g, " ")
+    .replace(/[\n\r\t]/g, " ");
 
-  // Agora quebra o texto por qualquer sequência de espaços ou quebras de linha
+  // 2. Quebra por qualquer sequência de espaços e remove os blocos vazios
   const codes = cleanInput
-    .split(/[\s\n\r]+/)
+    .split(/\s+/)
     .map((c) => normalizeStickerCode(c))
-    .filter((c) => c.length > 0);
+    .filter((c) => c.length > 0 && c !== "undefined");
 
   if (codes.length === 0) return { ok: false, message: "Nenhum código válido foi digitado." };
 
