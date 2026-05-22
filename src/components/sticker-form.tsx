@@ -72,7 +72,7 @@ export function StickerForm() {
           required
           rows={2}
           placeholder="BRA10, ARG07, ESP18"
-          className="mt-2 min-h-[5rem] w-full resize-none rounded-3xl border-2 border-deep/10 bg-ice p-5 text-2xl font-black uppercase tracking-wide text-deep outline-none transition focus:border-field"
+          className="mt-2 min-h-28 w-full resize-none rounded-3xl border-2 border-deep/10 bg-ice p-5 text-2xl font-black uppercase tracking-wide text-deep outline-none transition focus:border-field"
         />
 
         <p className="mt-2 text-sm font-semibold text-ink/60">
@@ -95,12 +95,19 @@ export function StickerForm() {
               setClientMessage("");
               inputRef.current?.focus();
             }}
-            className={`min-h-16 rounded-2xl px-3 text-left transition ${
-              status === value ? "bg-deep text-white shadow-soft" : "bg-white text-deep"
+            className={`min-h-20 touch-manipulation select-none rounded-2xl px-4 py-3 text-left transition active:scale-[0.98] ${
+              status === value
+                ? "bg-deep text-white shadow-soft"
+                : "bg-white text-deep active:bg-white/80"
             }`}
           >
-            <span className="block text-base font-black">{label}</span>
-            <span className="mt-1 block text-xs font-bold opacity-70">{helper}</span>
+            <span className="block text-base font-black leading-tight">
+              {label}
+            </span>
+
+            <span className="mt-1 block text-xs font-bold leading-tight opacity-70">
+              {helper}
+            </span>
           </button>
         ))}
       </div>
@@ -108,7 +115,7 @@ export function StickerForm() {
       <button
         type="submit"
         disabled={pending}
-        className="min-h-16 w-full rounded-3xl bg-gold px-5 text-lg font-black text-deep shadow-soft disabled:opacity-60"
+        className="min-h-16 w-full touch-manipulation select-none rounded-3xl bg-gold px-5 text-lg font-black text-deep shadow-soft transition active:scale-[0.98] active:bg-gold/90 disabled:opacity-60 disabled:active:scale-100"
       >
         {pending ? "Salvando..." : `Salvar como ${selectedLabel}`}
       </button>
