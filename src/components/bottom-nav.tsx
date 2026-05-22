@@ -16,13 +16,14 @@ export function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
-            className="flex min-h-16 flex-col items-center justify-center rounded-2xl px-1 text-[11px] font-bold active:bg-white/10"
+            aria-label={item.label}
+            className="flex min-h-16 touch-manipulation select-none flex-col items-center justify-center rounded-2xl px-1 py-2 text-[11px] font-bold transition active:scale-[0.97] active:bg-white/10"
           >
-            <span className="text-xl" aria-hidden>
+            <span className="text-xl leading-none" aria-hidden>
               {item.icon}
             </span>
 
-            <span className="mt-1">
+            <span className="mt-1 leading-none">
               {item.label}
             </span>
           </Link>
