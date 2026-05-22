@@ -65,7 +65,6 @@ const SELECTION_NAMES: Record<string, string> = {
   GHA: "🇬🇭 Gana"
 };
 
-// 🔥 FUNÇÃO BLINDADA: Garante o retorno apenas das letras válidas da seleção (ex: BRA), ignorando pontuações pendentes
 function getSelectionPrefix(code: string) {
   const match = code.match(/^[A-Z]+/i);
   return match ? match[0].toUpperCase() : "OUTRAS";
@@ -163,9 +162,12 @@ function Section({
           const total = selectionItems.length;
 
           return (
-            <div key={prefix} className="rounded-[2rem] bg-white p-4 shadow-soft">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
+            <div
+              key={prefix}
+              className="rounded-[2rem] bg-white p-4 shadow-soft"
+            >
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="min-w-0">
                   <p className="text-lg font-black text-deep">
                     {selectionName}
                   </p>
@@ -186,9 +188,9 @@ function Section({
                   return (
                     <li
                       key={`${item.id}-${index}`}
-                      className="flex items-center justify-between gap-3 rounded-3xl bg-ice px-4 py-3"
+                      className="flex items-center justify-between gap-3 rounded-3xl bg-ice px-4 py-4"
                     >
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-lg font-black text-deep">
                           {item.stickers?.code ?? "Sem código"}
                         </p>
@@ -200,7 +202,7 @@ function Section({
 
                       <div className="flex shrink-0 items-center gap-2">
                         <span
-                          className={`rounded-full px-3 py-2 text-xs font-black ${
+                          className={`flex min-h-11 items-center rounded-2xl px-4 text-xs font-black ${
                             status === "missing"
                               ? "bg-gold text-deep"
                               : "bg-field text-white"
@@ -217,7 +219,7 @@ function Section({
                         >
                           <button
                             type="submit"
-                            className="min-h-10 rounded-2xl bg-white px-3 text-xs font-black text-deep/70 shadow-sm"
+                            className="min-h-11 touch-manipulation rounded-2xl bg-white px-4 text-sm font-black text-deep/80 shadow-sm transition active:scale-[0.98] active:bg-white/80"
                           >
                             {actionLabel}
                           </button>
