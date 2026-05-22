@@ -9,7 +9,6 @@ const initialState: ActionState = { ok: false, message: "" };
 export function StickerForm() {
   const [state, formAction, pending] = useActionState(saveSticker, initialState);
   const [status, setStatus] = useState<StickerStatus>("missing");
-  // 🔥 Ajustado o tipo da referência para caixa de texto longa (textarea)
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -27,7 +26,6 @@ export function StickerForm() {
           Códigos das figurinhas
         </label>
 
-        {/* 🔥 Trocado de <input> para <textarea> para comportar a digitação em lote */}
         <textarea
           ref={inputRef}
           id="code"
@@ -41,8 +39,9 @@ export function StickerForm() {
           className="mt-2 w-full rounded-3xl border-2 border-deep/10 bg-ice p-5 text-2xl font-black uppercase tracking-wide text-deep outline-none transition focus:border-field resize-none min-h-[5rem]"
         />
 
+        {/* 🔥 AVISO ATUALIZADO: Deixa claro o limite de 20 para o usuário não se frustrar */}
         <p className="mt-2 text-sm font-semibold text-ink/60">
-          Digite vários códigos separados por vírgula, espaço ou quebra de linha.
+          Cole até 20 códigos por vez, separados por vírgula, espaço ou quebra de linha.
         </p>
       </div>
 
