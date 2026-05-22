@@ -5,29 +5,63 @@ import { saveSticker, type ActionState } from "@/app/actions";
 import type { StickerStatus } from "@/lib/supabase/types";
 
 const initialState: ActionState = { ok: false, message: "" };
+const MAX_STICKERS_PER_BATCH = 20;
+
+function parseStickerCodes(input: string): string[] {
+  const matches = input.toUpperCase().match(/[A-Z]{3}\d+/g);
+  return Array.from(new Set(matches ?? []));
+}
 
 export function StickerForm() {
   const [state, formAction, pending] = useActionState(saveSticker, initialState);
   const [status, setStatus] = useState<StickerStatus>("missing");
-  // 🔥 Ajustado o tipo da referência para caixa de texto longa (textarea)
+  const [clientMessage, setClientMessage] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (state.ok) formRef.current?.reset();
+    if (state.ok) {
+      formRef.current?.reset();
+      setClientMessage("");
+    }
+
     inputRef.current?.focus();
   }, [state]);
 
   const selectedLabel = status === "missing" ? "faltando" : "repetida";
+  const visibleMessage = clientMessage || state.message;
+  const isErrorMessage = Boolean(clientMessage) || !state.ok;
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-4 rounded-[2rem] bg-white p-5 shadow-soft">
+    <form
+      ref={formRef}
+      action={formAction}
+      onSubmit={(event) => {
+        const codes = parseStickerCodes(inputRef.current?.value ?? "");
+
+        if (codes.length > MAX_STICKERS_PER_BATCH) {
+          event.preventDefault();
+
+          setClientMessage(
+            `Envie no máximo ${MAX_STICKERS_PER_BATCH} figurinhas por vez. Você colou ${codes.length}.`
+          );
+
+          inputRef.current?.focus();
+          return;
+        }
+
+        setClientMessage("");
+      }}
+      className="space-y-4 rounded-[2rem] bg-white p-5 shadow-soft"
+    >
       <div>
-        <label htmlFor="code" className="text-sm font-black uppercase tracking-[0.18em] text-deep/70">
+        <label
+          htmlFor="code"
+          className="text-sm font-black uppercase tracking-[0.18em] text-deep/70"
+        >
           Códigos das figurinhas
         </label>
 
-        {/* 🔥 Trocado de <input> para <textarea> para comportar a digitação em lote */}
         <textarea
           ref={inputRef}
           id="code"
@@ -38,11 +72,11 @@ export function StickerForm() {
           required
           rows={2}
           placeholder="BRA10, ARG07, ESP18"
-          className="mt-2 w-full rounded-3xl border-2 border-deep/10 bg-ice p-5 text-2xl font-black uppercase tracking-wide text-deep outline-none transition focus:border-field resize-none min-h-[5rem]"
+          className="mt-2 min-h-[5rem] w-full resize-none rounded-3xl border-2 border-deep/10 bg-ice p-5 text-2xl font-black uppercase tracking-wide text-deep outline-none transition focus:border-field"
         />
 
         <p className="mt-2 text-sm font-semibold text-ink/60">
-          Digite vários códigos separados por vírgula, espaço ou quebra de linha.
+          Cole até 20 códigos por vez, separados por vírgula, espaço ou quebra de linha.
         </p>
       </div>
 
@@ -58,6 +92,7 @@ export function StickerForm() {
             type="button"
             onClick={() => {
               setStatus(value);
+              setClientMessage("");
               inputRef.current?.focus();
             }}
             className={`min-h-16 rounded-2xl px-3 text-left transition ${
@@ -78,14 +113,14 @@ export function StickerForm() {
         {pending ? "Salvando..." : `Salvar como ${selectedLabel}`}
       </button>
 
-      {state.message ? (
+      {visibleMessage ? (
         <p
           aria-live="polite"
           className={`rounded-2xl px-4 py-3 text-sm font-bold ${
-            state.ok ? "bg-field/10 text-field" : "bg-red-50 text-red-700"
+            isErrorMessage ? "bg-red-50 text-red-700" : "bg-field/10 text-field"
           }`}
         >
-          {state.ok ? `Boa! ${state.message}` : state.message}
+          {isErrorMessage ? visibleMessage : `Boa! ${visibleMessage}`}
         </p>
       ) : null}
 
