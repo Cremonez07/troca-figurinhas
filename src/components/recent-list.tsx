@@ -1,4 +1,5 @@
 import { removeUserStickerAction } from "@/app/actions";
+import { STICKERS_PER_SELECTION } from "@/lib/stickers/rules";
 import type { StickerStatus } from "@/lib/supabase/types";
 
 type RecentItem = {
@@ -12,7 +13,6 @@ type RecentItem = {
   } | null;
 };
 
-const STICKERS_PER_SELECTION = 20;
 
 const SELECTION_NAMES: Record<string, string> = {
   MEX: "🇲🇽 México",
