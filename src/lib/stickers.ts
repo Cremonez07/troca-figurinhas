@@ -1,4 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  normalizeStickerCode,
+  TOTAL_ALBUM_STICKERS
+} from "@/lib/stickers/rules";
 import type { Database, Profile, StickerStatus } from "@/lib/supabase/types";
 
 type Client = SupabaseClient<Database>;
@@ -58,11 +62,6 @@ export async function upsertProfile(supabase: Client, profile: Database["public"
   const { data, error = null } = await supabase.from("profiles").upsert(profile).select().single();
   if (error) throw error;
   return data;
-}
-
-// 🔥 FUNÇÃO CORRIGIDA: Remove absolutamente tudo o que não for letra ou número (limpa pontuações grudadas)
-export function normalizeStickerCode(code: string) {
-  return code.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
 }
 
 export async function ensureSticker(supabase: Client, code: string) {
@@ -179,10 +178,10 @@ export async function getDashboardSummary(supabase: Client, userId: string): Pro
     getTradeMatches(supabase, userId)
   ]);
 
-  const completed = Math.max(0, 670 - (missingTotal ?? 0));
+  const completed = Math.max(0, TOTAL_ALBUM_STICKERS - (missingTotal ?? 0));
 
   return {
-    progress: Math.min(100, Math.round((completed / 670) * 100)),
+    progress: Math.min(100, Math.round((completed / TOTAL_ALBUM_STICKERS) * 100)),
     missingTotal: missingTotal ?? 0,
     duplicateTotal: duplicateTotal ?? 0,
     matchTotal: matches.length,

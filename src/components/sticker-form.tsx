@@ -2,15 +2,13 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { saveSticker, type ActionState } from "@/app/actions";
+import {
+  MAX_STICKERS_PER_BATCH,
+  parseStickerCodes
+} from "@/lib/stickers/rules";
 import type { StickerStatus } from "@/lib/supabase/types";
 
 const initialState: ActionState = { ok: false, message: "" };
-const MAX_STICKERS_PER_BATCH = 20;
-
-function parseStickerCodes(input: string): string[] {
-  const matches = input.toUpperCase().match(/[A-Z]{3}\d+/g);
-  return Array.from(new Set(matches ?? []));
-}
 
 export function StickerForm() {
   const [state, formAction, pending] = useActionState(saveSticker, initialState);
