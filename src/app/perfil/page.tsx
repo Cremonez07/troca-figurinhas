@@ -4,11 +4,13 @@ import { ProfileForm } from "@/components/profile-form";
 import { ProgressRing } from "@/components/progress-ring";
 import { RecentList } from "@/components/recent-list";
 import { SectionCard } from "@/components/section-card";
+import { ShareStickersButtons } from "@/components/share-stickers-buttons";
 import { SetupNotice } from "@/components/setup-notice";
 import { StatCard } from "@/components/stat-card";
 import { signOut } from "@/app/actions";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
+  getAllUserStickers,
   getCurrentUserId,
   getDashboardSummary,
   getProfile
@@ -45,9 +47,10 @@ export default async function ProfilePage() {
     );
   }
 
-  const [profile, summary] = await Promise.all([
+  const [profile, summary, allStickers] = await Promise.all([
     getProfile(supabase, userId),
-    getDashboardSummary(supabase, userId)
+    getDashboardSummary(supabase, userId),
+    getAllUserStickers(supabase, userId)
   ]);
 
   return (
@@ -86,6 +89,10 @@ export default async function ProfilePage() {
 
       <SectionCard title="Painel do colecionador">
         <ProfileForm profile={profile} />
+      </SectionCard>
+
+      <SectionCard title="Compartilhar no WhatsApp">
+        <ShareStickersButtons items={allStickers} />
       </SectionCard>
 
       <SectionCard title="Conta">
