@@ -11,6 +11,63 @@ type ShareStickerItem = {
   } | null;
 };
 
+const SELECTION_FLAGS: Record<string, string> = {
+  MEX: "🇲🇽",
+  RSA: "🇿🇦",
+  KOR: "🇰🇷",
+  CZE: "🇨🇿",
+  CAN: "🇨🇦",
+  BIH: "🇧🇦",
+  QAT: "🇶🇦",
+  SUI: "🇨🇭",
+  BRA: "🇧🇷",
+  MAR: "🇲🇦",
+  HAI: "🇭🇹",
+  SCO: "🏴",
+  USA: "🇺🇸",
+  PAR: "🇵🇾",
+  AUS: "🇦🇺",
+  TUR: "🇹🇷",
+  GER: "🇩🇪",
+  CUW: "🇨🇼",
+  CIV: "🇨🇮",
+  ECU: "🇪🇨",
+  NED: "🇳🇱",
+  JPN: "🇯🇵",
+  SWE: "🇸🇪",
+  TUN: "🇹🇳",
+  BEL: "🇧🇪",
+  EGY: "🇪🇬",
+  IRN: "🇮🇷",
+  NZL: "🇳🇿",
+  ESP: "🇪🇸",
+  CPV: "🇨🇻",
+  KSA: "🇸🇦",
+  URU: "🇺🇾",
+  FRA: "🇫🇷",
+  SEN: "🇸🇳",
+  IRQ: "🇮🇶",
+  NOR: "🇳🇴",
+  ARG: "🇦🇷",
+  ALG: "🇩🇿",
+  AUT: "🇦🇹",
+  JOR: "🇯🇴",
+  POR: "🇵🇹",
+  COD: "🇨🇩",
+  UZB: "🇺🇿",
+  COL: "🇨🇴",
+  ENG: "🏴",
+  CRO: "🇭🇷",
+  PAN: "🇵🇦",
+  GHA: "🇬🇭"
+};
+
+function formatSelectionTitle(selection: string) {
+  const flag = SELECTION_FLAGS[selection];
+
+  return flag ? `${flag} ${selection}` : selection;
+}
+
 function getSelectionPrefix(code: string) {
   const match = code.match(/^[A-Z]+/i);
   return match ? match[0].toUpperCase() : "OUTRAS";
@@ -49,7 +106,7 @@ function formatGroupedCodes(codes: string[]) {
   const lines: string[] = [];
 
   for (const [selection, selectionCodes] of groups.entries()) {
-    lines.push(`${selection}`);
+    lines.push(formatSelectionTitle(selection));
     lines.push(selectionCodes.join(", "));
     lines.push("");
   }
